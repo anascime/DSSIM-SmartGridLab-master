@@ -1,10 +1,10 @@
 ###  # -*- coding: iso-8859-15 -*-
 
-""" Software para teste da comunicação entre um aplicativo Python e o DSSimPC-V2.0
+""" Software para teste da comunica??o entre um aplicativo Python e o DSSimPC-V2.0
 
 autores: Celso Rocha, Paulo Radatz
 
-Esse software corresponde a etapa inicial do Projeto de Integração do DSSimPC-V2.0 ao Laboratório de
+Esse software corresponde a etapa inicial do Projeto de Integra??o do DSSimPC-V2.0 ao Laborat?rio de
 SmartGrids do Enerq-USP.
 
 
@@ -33,8 +33,6 @@ print teste.get_simulation_time('d')
 
 teste.check_sim_needed(18, 0, 0)
 teste.solve_time(18, 0, 0)
-
-
 
 # b = teste.get_all_nodes_voltages('kV')
 # escreve_lista_par(arquivo2, b)
