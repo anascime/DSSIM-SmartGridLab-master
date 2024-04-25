@@ -12,7 +12,7 @@ try:
     '''
     HOST = ''  # localhost
     # reserve uma PORT neste PC
-    PORT = 1025
+    PORT = 1024
 
     s = socket.socket() # cria objeto socket
     print('Socket criado com sucesso')

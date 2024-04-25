@@ -7,7 +7,7 @@ try:
     s = socket.socket()
 
     # Define the port on which you want to connect
-    PORT = 12345
+    PORT = 1024
     HOST = '127.0.0.1'
 
     # connect to the server on local computer
