@@ -1,14 +1,14 @@
-###  # -*- coding: iso-8859-15 -*-
+###  # -*- coding: UTF-8 -*-
 
 """
 
-Classe responsável por executar a comunicação do aplicativo em Python com o MC.
-Ela contém métodos que emulam o servidor do SINAP, que escuta às solicitações
-do Módulo Central.
+Classe responsÃ¡vel por executar a comunicaÃ§Ã£o do aplicativo em Python com o MC.
+Ela contÃ©m mÃ©todos que emulam o servidor do SINAP, que escuta Ã s solicitaÃ§Ãµes
+do MÃ³dulo Central.
 
 """
 
-__author__ = 'CelsoRocha' and 'Paulo Radatz'
+# __author__ = 'CelsoRocha' and 'Paulo Radatz'
 
 import socket
 import ctypes
@@ -24,31 +24,31 @@ class MC:
         """ Cria um novo objeto MC """
 
         self.TCP_HOST = TCP_HOST  # O que significa o HOST exatamente? Uma string vazia significa que o servidor
-        # pode escutar conexões oriundas de outros computadores na rede também. "127.0.0.1" significa que
-        # o servidor escutará somente conexões oriundas da própria máquina.
-        self.TCP_PORT = TCP_PORT  # Porta onde o servidor se encontrará
+        # pode escutar conexÃµes oriundas de outros computadores na rede tambÃ©m. "127.0.0.1" significa que
+        # o servidor escutarÃ¡ somente conexÃµes oriundas da prÃ³pria mÃ¡quina.
+        self.TCP_PORT = TCP_PORT  # Porta onde o servidor se encontrarÃ¡
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Cria o socket
-        self.dssim_obj = dssim_obj  # referência para o objeto DSSim
-        self.form = form  # referência para o objeto formulário principal
+        self.dssim_obj = dssim_obj  # referÃªncia para o objeto DSSim
+        self.form = form  # referÃªncia para o objeto formulÃ¡rio principal
 
-        self.mensagem = [struct.pack('<Q', 0)[0]]*16384    # igual a ['\x00']
+        self.mensagem = [struct.pack('<Q', 0)[0]]*16384    #< igual a ['\x00']
         self.copia_mensagem = [struct.pack('<Q', 0)[0]]*16384
 
-    # #--------------------------------------------------------------------# #
-    #                        Métodos Principais
-    # #--------------------------------------------------------------------# #
+    # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€â”€ MÃ©todos Principais â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def process_data(self, msg):
-        """ Método responsável por processar a mensagem recebida pelo cliente MC,
-         chamando a respectiva função na comunicação com o servidor DSSim e
+        """ MÃ©todo responsÃ¡vel por processar a mensagem recebida pelo cliente MC,
+         chamando a respectiva funÃ§Ã£o na comunicaÃ§Ã£o com o servidor DSSim e
          enviando a devida mensagem de volta ao cliente MC."""
 
         # tamanho = len(data)
         # funcao = ord(data[0])
-        # O comprimento de "data" é exatamente o comprimento da mensagem. No print data,
-        # parece que a mensagem é bem menor, mas isso é porque vários "chars" enviados
-        # pelo C++ são nulos, o que vira um char "", que na hora do print, não aparece.
+        # O comprimento de "data" Ã© exatamente o comprimento da mensagem. No print(data,)
+        # parece que a mensagem Ã© bem menor, mas isso Ã© porque vÃ¡rios "chars" enviados
+        # pelo C++ sÃ£o nulos, o que vira um char "", que na hora do print, nÃ£o aparece.
 
         message = reconstroi_msg(msg)
         self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.REC, message + "\n\n")
@@ -56,13 +56,14 @@ class MC:
         msg_dividida = message.split(";")
         funcao = msg_dividida[0]
 
-        if self.dssim_obj is not None:  # Verifica se existe conexão com o DSSim
-            if funcao == "99":  # Retorna ID do equipamento por meio de código
+        #! verificar se esses "is not", funcionam e/ou fazem sentido
+        if self.dssim_obj is not None:  # Verifica se existe conexÃ£o com o DSSim
+            if funcao == "99":  # Retorna ID do equipamento por meio de cÃ³digo
                 codigo_equipamento = msg_dividida[-2]
                 tipo_equipamento = msg_dividida[5]
                 id_equipamento = self.dssim_obj.retorna_id(codigo_equipamento, tipo_equipamento)  # int
 
-                qtde_bytes = 43   # Usando o mesmo valor definido no C++ builder quando a função 99 é enviada para o Simulador.
+                qtde_bytes = 43   # Usando o mesmo valor definido no C++ builder quando a funÃ§Ã£o 99 Ã© enviada para o Simulador.
                 msg_retornada = [chr(0)]*qtde_bytes
                 now = datetime.datetime.now()
 
@@ -80,7 +81,7 @@ class MC:
                 msg_retornada[9] = struct.pack('<Q', id_equipamento)[2]
                 msg_retornada[10] = struct.pack('<Q', id_equipamento)[3]
 
-                # Código do Equipamento
+                # CÃ³digo do Equipamento
                 for i in range(11, 11 + len(codigo_equipamento)):
                     msg_retornada[i] = codigo_equipamento[i-11]
 
@@ -90,7 +91,7 @@ class MC:
 
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "1":  # MC solicita registros de equipamentos. Devemos retornar a função 02 do protocolo.
+            elif funcao == "1":  # MC solicita registros de equipamentos. Devemos retornar a funÃ§Ã£o 02 do protocolo.
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -103,31 +104,31 @@ class MC:
 
                 count = 0
                 lista_equipamentos = []  # lista de tuplas
-                for i in range(len(msg_dividida)-1):  # -1 porque tem um espaço a mais que vem por causa do split(";")
+                for i in range(len(msg_dividida)-1):  # -1 porque tem um espaÃ§o a mais que vem por causa do split(";")
                     if i == (5 + count*2):
                             tipo_equipamento = msg_dividida[i]
-                            print tipo_equipamento
+                            print(tipo_equipamento)
                             id_equipamento = msg_dividida[i+1]
-                            print id_equipamento
+                            print(id_equipamento)
                             count = count + 1
                             lista_equipamentos.append((tipo_equipamento, id_equipamento))
 
-                # Retornar a função 02:
-                    # Trata-se de uma resposta para a função 1, na qual são enviados todos os registros pertinentes aos
-                    # equipamentos solicitados, na ordem de solicitação e referidos ao horário definido na solicitação.
-                    # Cada informação de grandeza é dada por 8 bytes, sendo 4 bytes para o módulo e 4 bytes para a fase (em graus).
+                # Retornar a funÃ§Ã£o 02:
+                    # Trata-se de uma resposta para a funÃ§Ã£o 1, na qual sÃ£o enviados todos os registros pertinentes aos
+                    # equipamentos solicitados, na ordem de solicitaÃ§Ã£o e referidos ao horÃ¡rio definido na solicitaÃ§Ã£o.
+                    # Cada informaÃ§Ã£o de grandeza Ã© dada por 8 bytes, sendo 4 bytes para o mÃ³dulo e 4 bytes para a fase (em graus).
 
-                    # Os registros de grandezas enviados pela função 2 estão relacionados à simulação corrente do Sinap, ou seja,
+                    # Os registros de grandezas enviados pela funÃ§Ã£o 2 estÃ£o relacionados Ã  simulaÃ§Ã£o corrente do Sinap, ou seja,
                     # fluxo de carga ou curto-circuito.
 
                 dic_tipo_registros = {"1": 32, "2": 32, "3": 136, "4": 129, "5": 129, "6": 48, "7": 37, "8": 66, "9": 72, "10": 72, "12": 68}
 
-                # OBS: Registro do equipamento tipo Chave: Não estamos considerando, os 4 bytes de "Id da Barra de Referência" porque
-                # o Módulo Central que eu estou utilizando não recebe ele. Nem sabemos que parâmetro é esse também (Por isso 132)
-                # ATUALIZAÇÃO 24/04/2018: A versão "ModuloCentralXE7_Rev2_Sinap20170725" do Módulo Central espera na leitura da função
+                # OBS: Registro do equipamento tipo Chave: NÃ£o estamos considerando, os 4 bytes de "Id da Barra de ReferÃªncia" porque
+                # o MÃ³dulo Central que eu estou utilizando nÃ£o recebe ele. Nem sabemos que parÃ¢metro Ã© esse tambÃ©m (Por isso 132)
+                # ATUALIZAÃ‡ÃƒO 24/04/2018: A versÃ£o "ModuloCentralXE7_Rev2_Sinap20170725" do MÃ³dulo Central espera na leitura da funÃ§Ã£o
                 # 2 esses 4 bytes. Vamos assumir como sendo a barra 1 da chave (Agora, 136 bytes)
 
-                qtde_bytes = 7  # Começa sempre com 7 bytes fixos.
+                qtde_bytes = 7  # ComeÃ§a sempre com 7 bytes fixos.
                 for i in range(len(lista_equipamentos)):
                     qtde_bytes = qtde_bytes + 5 + dic_tipo_registros[lista_equipamentos[i][0]]
 
@@ -143,7 +144,7 @@ class MC:
 
                 tipo_calculo = self.dssim_obj.get_last_simulation_type()
                 if tipo_calculo == "Fluxo":
-                    msg_retornada[6] = chr(0)  # Fluxo. O que mandar aqui exatamente? # mandar o último tipo de simulação enviado pelo dssim.
+                    msg_retornada[6] = chr(0)  # Fluxo. O que mandar aqui exatamente? # mandar o Ãºltimo tipo de simulaÃ§Ã£o enviado pelo dssim.
                 else:  # "Curto"
                     msg_retornada[6] = chr(1)
 
@@ -156,7 +157,7 @@ class MC:
                     equipamento = []
 
                     if i == 1:
-                        print "oi"
+                        print("oi")
                     equipamento.append(chr(int(tipo_equipamento)))  # Tipo
                     equipamento.append(struct.pack('<Q', int(id_equipamento))[0:4])  # Id
 
@@ -173,14 +174,14 @@ class MC:
                         vn = voltages[6]
                         vn_angle = voltages[7]
 
-                        equipamento.append(struct.pack('<f', va)[0:4])        # Módulo Fase A
-                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', vb)[0:4])        # Módulo Fase B
-                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', vc)[0:4])        # Módulo Fase C
-                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', vn)[0:4])        # Módulo Neutro
-                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', va)[0:4])        # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', vb)[0:4])        # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', vc)[0:4])        # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', vn)[0:4])        # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ã‚ngulo Neutro
 
                     elif tipo_equipamento == "2":  # Trecho
 
@@ -196,14 +197,14 @@ class MC:
                         in_ = currents[6]  # in_
                         in_angle = currents[7]
 
-                        equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', ia)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', ib)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', ic)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', in_)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ã‚ngulo Neutro
 
                     elif tipo_equipamento == "3":  # Chave
 
@@ -212,7 +213,7 @@ class MC:
                         voltages_1 = self.dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                         voltages_2 = self.dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         powers_total = self.dssim_obj.get_total_powers(nome_opendss, 1)  # salva array com registros
-                        power_phase_a = self.dssim_obj.get_phase_powers(nome_opendss, 1, 1)  # Cuidado aqui, precisamos verificar as fases disponíveis antes...
+                        power_phase_a = self.dssim_obj.get_phase_powers(nome_opendss, 1, 1)  # Cuidado aqui, precisamos verificar as fases disponÃ­veis antes...
                         power_phase_b = self.dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = self.dssim_obj.get_phase_powers(nome_opendss, 1, 3)
 
@@ -225,14 +226,14 @@ class MC:
                         vn1 = voltages_1[6]
                         vn1_angle = voltages_1[7]
 
-                        equipamento.append(struct.pack('<f', va1)[0:4])  # Módulo Fase A - Terminal 1
-                        equipamento.append(struct.pack('<f', va1_angle)[0:4])  # Ângulo Fase - Terminal 1
-                        equipamento.append(struct.pack('<f', vb1)[0:4])  # Módulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vb1_angle)[0:4])  # Ângulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vc1)[0:4])  # Módulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vc1_angle)[0:4])  # Ângulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vn1)[0:4])  # Módulo Neutro - Terminal 1
-                        equipamento.append(struct.pack('<f', vn1_angle)[0:4])  # Ângulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', va1)[0:4])  # MÃ³dulo Fase A - Terminal 1
+                        equipamento.append(struct.pack('<f', va1_angle)[0:4])  # Ã‚ngulo Fase - Terminal 1
+                        equipamento.append(struct.pack('<f', vb1)[0:4])  # MÃ³dulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vb1_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vc1)[0:4])  # MÃ³dulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vc1_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vn1)[0:4])  # MÃ³dulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', vn1_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 1
 
                         va2 = voltages_2[0]
                         va2_angle = voltages_2[1]
@@ -243,14 +244,14 @@ class MC:
                         vn2 = voltages_2[6]
                         vn2_angle = voltages_2[7]
 
-                        equipamento.append(struct.pack('<f', va2)[0:4])  # Módulo Fase A - Terminal 2
-                        equipamento.append(struct.pack('<f', va2_angle)[0:4])  # Ângulo Fase - Terminal 2
-                        equipamento.append(struct.pack('<f', vb2)[0:4])  # Módulo Fase B - Terminal 2
-                        equipamento.append(struct.pack('<f', vb2_angle)[0:4])  # Ângulo Fase B - Terminal 2
-                        equipamento.append(struct.pack('<f', vc2)[0:4])  # Módulo Fase C - Terminal 2
-                        equipamento.append(struct.pack('<f', vc2_angle)[0:4])  # Ângulo Fase C - Terminal 2
-                        equipamento.append(struct.pack('<f', vn2)[0:4])  # Módulo Neutro - Terminal 2
-                        equipamento.append(struct.pack('<f', vn2_angle)[0:4])  # Ângulo Neutro - Terminal 2
+                        equipamento.append(struct.pack('<f', va2)[0:4])  # MÃ³dulo Fase A - Terminal 2
+                        equipamento.append(struct.pack('<f', va2_angle)[0:4])  # Ã‚ngulo Fase - Terminal 2
+                        equipamento.append(struct.pack('<f', vb2)[0:4])  # MÃ³dulo Fase B - Terminal 2
+                        equipamento.append(struct.pack('<f', vb2_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 2
+                        equipamento.append(struct.pack('<f', vc2)[0:4])  # MÃ³dulo Fase C - Terminal 2
+                        equipamento.append(struct.pack('<f', vc2_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 2
+                        equipamento.append(struct.pack('<f', vn2)[0:4])  # MÃ³dulo Neutro - Terminal 2
+                        equipamento.append(struct.pack('<f', vn2_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 2
 
                         ia = currents[0]
                         ia_angle = currents[1]
@@ -261,16 +262,16 @@ class MC:
                         in_ = currents[6]  # in_
                         in_angle = currents[7]
 
-                        equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', ia)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', ib)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', ic)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', in_)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ã‚ngulo Neutro
 
-                        switch_state = chr(int(self.dssim_obj.get_switch_state(nome_opendss.split(".")[1])))   # switch state não tá funcionando para a última chave
+                        switch_state = chr(int(self.dssim_obj.get_switch_state(nome_opendss.split(".")[1])))   # switch state nÃ£o tÃ¡ funcionando para a Ãºltima chave
                         equipamento.append(switch_state)
                         cbr = chr(int(0))
                         equipamento.append(cbr)
@@ -289,16 +290,16 @@ class MC:
                         p_c = power_phase_c[0]/1000.0
                         q_c = power_phase_c[1]/1000.0
 
-                        equipamento.append(struct.pack('<f', p_3f)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', p_a)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', q_a)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', p_b)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', q_b)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', p_c)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', q_c)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', p_3f)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', p_a)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', q_a)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', p_b)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', q_b)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', p_c)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', q_c)[0:4])  # Ã‚ngulo Neutro
 
-                        # Id da barra de referência (assumi como sendo a barra 1 da chave) Convertendo o valor do ID para 4 bytes segundo o formato Little Endian
+                        # Id da barra de referÃªncia (assumi como sendo a barra 1 da chave) Convertendo o valor do ID para 4 bytes segundo o formato Little Endian
                         barra_ref_nome = self.dssim_obj.send_dss_command("? " + nome_opendss + ".bus1")
                         id_barra_ref = int(barra_ref_nome.split("_id")[1].split(".")[0])
                         equipamento.append(struct.pack('<Q', id_barra_ref)[0])
@@ -306,7 +307,7 @@ class MC:
                         equipamento.append(struct.pack('<Q', id_barra_ref)[2])
                         equipamento.append(struct.pack('<Q', id_barra_ref)[3])
 
-                    elif tipo_equipamento == "4" or tipo_equipamento == "5":  # Transformador ou Regulador de Tensão
+                    elif tipo_equipamento == "4" or tipo_equipamento == "5":  # Transformador ou Regulador de TensÃ£o
 
                         nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)
                         voltages_1 = self.dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
@@ -324,14 +325,14 @@ class MC:
                         vn1 = 0
                         vn1_angle = 0
 
-                        equipamento.append(struct.pack('<f', va1)[0:4])  # Módulo Fase A - Terminal 1
-                        equipamento.append(struct.pack('<f', va1_angle)[0:4])  # Ângulo Fase - Terminal 1
-                        equipamento.append(struct.pack('<f', vb1)[0:4])  # Módulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vb1_angle)[0:4])  # Ângulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vc1)[0:4])  # Módulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vc1_angle)[0:4])  # Ângulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vn1)[0:4])  # Módulo Neutro - Terminal 1
-                        equipamento.append(struct.pack('<f', vn1_angle)[0:4])  # Ângulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', va1)[0:4])  # MÃ³dulo Fase A - Terminal 1
+                        equipamento.append(struct.pack('<f', va1_angle)[0:4])  # Ã‚ngulo Fase - Terminal 1
+                        equipamento.append(struct.pack('<f', vb1)[0:4])  # MÃ³dulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vb1_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vc1)[0:4])  # MÃ³dulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vc1_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vn1)[0:4])  # MÃ³dulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', vn1_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 1
 
                         va2 = voltages_2[0]
                         va2_angle = voltages_2[1]
@@ -344,14 +345,14 @@ class MC:
                         vn2 = 0
                         vn2_angle = 0
 
-                        equipamento.append(struct.pack('<f', va2)[0:4])  # Módulo Fase A - Terminal 2
-                        equipamento.append(struct.pack('<f', va2_angle)[0:4])  # Ângulo Fase - Terminal 2
-                        equipamento.append(struct.pack('<f', vb2)[0:4])  # Módulo Fase B - Terminal 2
-                        equipamento.append(struct.pack('<f', vb2_angle)[0:4])  # Ângulo Fase B - Terminal 2
-                        equipamento.append(struct.pack('<f', vc2)[0:4])  # Módulo Fase C - Terminal 2
-                        equipamento.append(struct.pack('<f', vc2_angle)[0:4])  # Ângulo Fase C - Terminal 2
-                        equipamento.append(struct.pack('<f', vn2)[0:4])  # Módulo Neutro - Terminal 2
-                        equipamento.append(struct.pack('<f', vn2_angle)[0:4])  # Ângulo Neutro - Terminal 2
+                        equipamento.append(struct.pack('<f', va2)[0:4])  # MÃ³dulo Fase A - Terminal 2
+                        equipamento.append(struct.pack('<f', va2_angle)[0:4])  # Ã‚ngulo Fase - Terminal 2
+                        equipamento.append(struct.pack('<f', vb2)[0:4])  # MÃ³dulo Fase B - Terminal 2
+                        equipamento.append(struct.pack('<f', vb2_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 2
+                        equipamento.append(struct.pack('<f', vc2)[0:4])  # MÃ³dulo Fase C - Terminal 2
+                        equipamento.append(struct.pack('<f', vc2_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 2
+                        equipamento.append(struct.pack('<f', vn2)[0:4])  # MÃ³dulo Neutro - Terminal 2
+                        equipamento.append(struct.pack('<f', vn2_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 2
 
                         ia1 = currents[0]
                         ia1_angle = currents[1]
@@ -375,23 +376,23 @@ class MC:
                         in2_= 0
                         in2_angle = 0
 
-                        equipamento.append(struct.pack('<f', ia1)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia1_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib1)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib1_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic1)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic1_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in1_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in1_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', ia1)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', ia1_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', ib1)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', ib1_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', ic1)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', ic1_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', in1_)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', in1_angle)[0:4])  # Ã‚ngulo Neutro
 
-                        equipamento.append(struct.pack('<f', ia2)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia2_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib2)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib2_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic2)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic2_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in2_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in2_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', ia2)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', ia2_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', ib2)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', ib2_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', ic2)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', ic2_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', in2_)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', in2_angle)[0:4])  # Ã‚ngulo Neutro
 
                         tap1, step1 = self.dssim_obj.get_transformer_tap(nome_opendss, 1)
                         tap2, step2 = self.dssim_obj.get_transformer_tap(nome_opendss, 2)
@@ -405,8 +406,8 @@ class MC:
 
                         equipamento.append(struct.pack('<h', step)[0])  # Passo do tap. Converter para signed int
 
-                    elif tipo_equipamento == "6":  # Capacitor Série
-                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
+                    elif tipo_equipamento == "6":  # Capacitor SÃ©rie
+                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda nÃ£o implementado!" + "\n\n")
                         return None
 
                     elif tipo_equipamento == "7":  # Capacitor
@@ -425,24 +426,24 @@ class MC:
                         vn = 0
                         vn_angle = 0
 
-                        equipamento.append(struct.pack('<f', va)[0:4])  # Módulo Fase A - Terminal 1
-                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ângulo Fase - Terminal 1
-                        equipamento.append(struct.pack('<f', vb)[0:4])  # Módulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ângulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vc)[0:4])  # Módulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ângulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vn)[0:4])  # Módulo Neutro - Terminal 1
-                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ângulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', va)[0:4])  # MÃ³dulo Fase A - Terminal 1
+                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ã‚ngulo Fase - Terminal 1
+                        equipamento.append(struct.pack('<f', vb)[0:4])  # MÃ³dulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vc)[0:4])  # MÃ³dulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vn)[0:4])  # MÃ³dulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 1
 
 
                         kvar = self.dssim_obj.get_capacitor_kvar(nome_opendss)
-                        equipamento.append(struct.pack('<f', kvar)[0:4])  # Potência Reativa kvar
+                        equipamento.append(struct.pack('<f', kvar)[0:4])  # PotÃªncia Reativa kvar
 
                         estado = self.dssim_obj.get_capacitor_state(nome_opendss)
                         equipamento.append(chr(estado))
 
                     elif tipo_equipamento == "8":  # Gerador
-                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
+                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda nÃ£o implementado!" + "\n\n")
                         return None
 
                     elif tipo_equipamento == "9" or tipo_equipamento == "10":  # Suprimento ou Carga
@@ -466,14 +467,14 @@ class MC:
                         vn = 0
                         vn_angle = 0
 
-                        equipamento.append(struct.pack('<f', va)[0:4])  # Módulo Fase A - Terminal 1
-                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ângulo Fase - Terminal 1
-                        equipamento.append(struct.pack('<f', vb)[0:4])  # Módulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ângulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vc)[0:4])  # Módulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ângulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vn)[0:4])  # Módulo Neutro - Terminal 1
-                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ângulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', va)[0:4])  # MÃ³dulo Fase A - Terminal 1
+                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ã‚ngulo Fase - Terminal 1
+                        equipamento.append(struct.pack('<f', vb)[0:4])  # MÃ³dulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vc)[0:4])  # MÃ³dulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vn)[0:4])  # MÃ³dulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 1
 
                         ia = currents[0]
                         ib = currents[2]
@@ -503,14 +504,14 @@ class MC:
                         in_ = 0
                         in_angle = 0
 
-                        equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', ia)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', ib)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', ic)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', in_)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ã‚ngulo Neutro
 
                         if tipo_equipamento == "9":  # Suprimento
                             p_3f = powers_total[0] * -1/1000.0
@@ -519,11 +520,11 @@ class MC:
                             p_3f = powers_total[0]/1000.0
                             q_3f = powers_total[1]/1000.0
 
-                        equipamento.append(struct.pack('<f', p_3f)[0:4])  # Potência Ativa Trifásica, sentido saindo do suprimento
-                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # Potência Reativa Trifásica, sentido saindo do suprimento
+                        equipamento.append(struct.pack('<f', p_3f)[0:4])  # PotÃªncia Ativa TrifÃ¡sica, sentido saindo do suprimento
+                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # PotÃªncia Reativa TrifÃ¡sica, sentido saindo do suprimento
 
                     elif tipo_equipamento == "11":  # Filtro
-                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
+                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda nÃ£o implementado!" + "\n\n")
                         return None
                     elif tipo_equipamento == "12":  # Reator
 
@@ -543,14 +544,14 @@ class MC:
                         vn = 0
                         vn_angle = 0
 
-                        equipamento.append(struct.pack('<f', va)[0:4])  # Módulo Fase A - Terminal 1
-                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ângulo Fase - Terminal 1
-                        equipamento.append(struct.pack('<f', vb)[0:4])  # Módulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ângulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vc)[0:4])  # Módulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ângulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vn)[0:4])  # Módulo Neutro - Terminal 1
-                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ângulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', va)[0:4])  # MÃ³dulo Fase A - Terminal 1
+                        equipamento.append(struct.pack('<f', va_angle)[0:4])  # Ã‚ngulo Fase - Terminal 1
+                        equipamento.append(struct.pack('<f', vb)[0:4])  # MÃ³dulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vb_angle)[0:4])  # Ã‚ngulo Fase B - Terminal 1
+                        equipamento.append(struct.pack('<f', vc)[0:4])  # MÃ³dulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vc_angle)[0:4])  # Ã‚ngulo Fase C - Terminal 1
+                        equipamento.append(struct.pack('<f', vn)[0:4])  # MÃ³dulo Neutro - Terminal 1
+                        equipamento.append(struct.pack('<f', vn_angle)[0:4])  # Ã‚ngulo Neutro - Terminal 1
 
                         ia = currents[0]
                         ia_angle = currents[1]
@@ -563,34 +564,34 @@ class MC:
                         in_ = 0
                         in_angle = 0
 
-                        equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
+                        equipamento.append(struct.pack('<f', ia)[0:4])  # MÃ³dulo Fase A
+                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ã‚ngulo Fase
+                        equipamento.append(struct.pack('<f', ib)[0:4])  # MÃ³dulo Fase B
+                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ã‚ngulo Fase B
+                        equipamento.append(struct.pack('<f', ic)[0:4])  # MÃ³dulo Fase C
+                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ã‚ngulo Fase C
+                        equipamento.append(struct.pack('<f', in_)[0:4])  # MÃ³dulo Neutro
+                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ã‚ngulo Neutro
 
                         q_3f = powers_total[1]/1000.0
 
-                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # Potência Reativa Trifásica, sentido saindo do suprimento
+                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # PotÃªncia Reativa TrifÃ¡sica, sentido saindo do suprimento
 
                     else:
-                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro não identificado. Tipo de Equipamento " + tipo_equipamento + " não identificado!" + "\n\n")
+                        self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro nÃ£o identificado. Tipo de Equipamento " + tipo_equipamento + " nÃ£o identificado!" + "\n\n")
                         return None
 
                     lista_equipamentos_todos = lista_equipamentos_todos + equipamento  # Concatena lista
 
                 # Mensagem Display
-                msg = str(ord(msg_retornada[0])) + ";" + str(qtde_bytes) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";" + str(ord(msg_retornada[5])) + ";" + tipo_calculo + ";"   # Não mostraremos os registros dos equipamentos pq a msg pode
+                msg = str(ord(msg_retornada[0])) + ";" + str(qtde_bytes) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";" + str(ord(msg_retornada[5])) + ";" + tipo_calculo + ";"   # NÃ£o mostraremos os registros dos equipamentos pq a msg pode
                 # ser muito extensa
                 self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
 
                 msg_retornada = msg_retornada + lista_equipamentos_todos
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "3":  # Alteração de Estado de Chave
+            elif funcao == "3":  # AlteraÃ§Ã£o de Estado de Chave
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -599,15 +600,15 @@ class MC:
                 id_equipamento = msg_dividida[6]
                 comando = int(msg_dividida[7])
 
-                nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)[5:]  # retira o "Line." do nome Completo do elemento Line que é um switch
+                nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)[5:]  # retira o "Line." do nome Completo do elemento Line que Ã© um switch
                 estado_atual = int(self.dssim_obj.get_switch_state(nome_opendss))
 
-                if comando != estado_atual:  # se o novo estado é diferente do atual
+                if comando != estado_atual:  # se o novo estado Ã© diferente do atual
                     resposta = self.dssim_obj.set_switch_state(nome_opendss, comando)
-                    if resposta == 'OK':  # Significa que foi executada com sucesso pelo OpenDSS-G. Verificar o que ocorre se a chave já estivesse aberta
+                    if resposta == 'OK':  # Significa que foi executada com sucesso pelo OpenDSS-G. Verificar o que ocorre se a chave jÃ¡ estivesse aberta
                         msg_retornada = func100acknowledgment(int(funcao), 1)
 
-                        # self.dssim_obj.update_flow_needed = True  # força solução do fluxo novamente porque houve mudança no estado da chave
+                        # self.dssim_obj.update_flow_needed = True  # forÃ§a soluÃ§Ã£o do fluxo novamente porque houve mudanÃ§a no estado da chave
                         if self.dssim_obj.check_sim_needed(hora, minuto, segundo):
                             # Simula
                             self.dssim_obj.solve_time(hora, minuto, segundo)
@@ -618,7 +619,7 @@ class MC:
 
                     else:
                         msg_retornada = func100acknowledgment(int(funcao), 0)
-                else:  # caso contrário, não é necessário fazer nada.
+                else:  # caso contrÃ¡rio, nÃ£o Ã© necessÃ¡rio fazer nada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
 
                 # Mensagem Display
@@ -627,7 +628,7 @@ class MC:
 
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "4":  # Simulação de Falta
+            elif funcao == "4":  # SimulaÃ§Ã£o de Falta
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -638,7 +639,7 @@ class MC:
                 id_equipamento = msg_dividida[6]
                 tipo_curto = msg_dividida[7]
                 valor_percentual_distancia = msg_dividida[8]
-                resistencia = msg_dividida[9]  # resistência de falta
+                resistencia = msg_dividida[9]  # resistÃªncia de falta
                 indicacao_calculo = msg_dividida[10]
 
                 if tipo_equipamento == "1":  # Falta em Barra
@@ -651,7 +652,7 @@ class MC:
                     nome_trecho_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)
                     resposta = self.dssim_obj.set_new_line_fault(nome_trecho_opendss, float(valor_percentual_distancia), int(tipo_curto), resistencia)
 
-                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                if resposta == 'OK':  # 0 Ã© o valor retornado pelo DSSim quando essa funÃ§Ã£o Ã© executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -671,7 +672,7 @@ class MC:
 
                 resposta = self.dssim_obj.clear_fault()
 
-                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                if resposta == 'OK':  # 0 Ã© o valor retornado pelo DSSim quando essa funÃ§Ã£o Ã© executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -682,7 +683,7 @@ class MC:
 
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "6":  # Alteração de Tap de Transformador
+            elif funcao == "6":  # AlteraÃ§Ã£o de Tap de Transformador
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -696,7 +697,7 @@ class MC:
                 nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = self.dssim_obj.varia_tap(nome_opendss, variacao_tap)
 
-                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                if resposta == 'OK':  # 0 Ã© o valor retornado pelo DSSim quando essa funÃ§Ã£o Ã© executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -707,7 +708,7 @@ class MC:
 
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "8":  # Alteração no valor de Reativo em BC
+            elif funcao == "8":  # AlteraÃ§Ã£o no valor de Reativo em BC
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -721,7 +722,7 @@ class MC:
                 nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = self.dssim_obj.set_capacitor_kvar(nome_opendss, novo_kvar)
 
-                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                if resposta == 'OK':  # 0 Ã© o valor retornado pelo DSSim quando essa funÃ§Ã£o Ã© executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -732,7 +733,7 @@ class MC:
 
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "10":  # Alteração no valor de Carga
+            elif funcao == "10":  # AlteraÃ§Ã£o no valor de Carga
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -747,7 +748,7 @@ class MC:
                 nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = self.dssim_obj.set_load_powers(nome_opendss, novo_kw, novo_kvar)
 
-                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                if resposta == 'OK':  # 0 Ã© o valor retornado pelo DSSim quando essa funÃ§Ã£o Ã© executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -758,7 +759,7 @@ class MC:
 
                 return "".join(str(x) for x in msg_retornada)
 
-            elif funcao == "11":  # Alteração do Estado de BC
+            elif funcao == "11":  # AlteraÃ§Ã£o do Estado de BC
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -772,7 +773,7 @@ class MC:
                 nome_opendss = self.dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = self.dssim_obj.set_capacitor_state(nome_opendss, int(novo_estado))
 
-                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                if resposta == 'OK':  # 0 Ã© o valor retornado pelo DSSim quando essa funÃ§Ã£o Ã© executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -784,16 +785,16 @@ class MC:
                 return "".join(str(x) for x in msg_retornada)
 
             else:
-                print u"Função " + funcao + u" não reconhecida"
+                print(u"FunÃ§Ã£o " + funcao + u" nÃ£o reconhecida")
                 self.form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Nada enviado!" + "\n\n")
                 return None
 
         return "nao existe objeto dssim"
 
     def decodifica_mensagem(self, data):
-        """ Método que recebe a str com a mensagem que vem no Buffer e decodifica cada pacote de mensagem.
-        Foi necessário criar essa função, pois como o envio e recebimento de mensagens é assíncrono, pode ser
-        que em uma determinada leitura do conteúdo do buffer venha mais de um pacote de mensagem."""
+        """ MÃ©todo que recebe a str com a mensagem que vem no Buffer e decodifica cada pacote de mensagem.
+        Foi necessÃ¡rio criar essa funÃ§Ã£o, pois como o envio e recebimento de mensagens Ã© assÃ­ncrono, pode ser
+        que em uma determinada leitura do conteÃºdo do buffer venha mais de um pacote de mensagem."""
 
         decodificar_dados_recebidos = True
         tamanho_mensagem = 0
@@ -812,12 +813,12 @@ class MC:
 
                 # if resposta is not None:
                 if ord(data[0]) == 3:
-                    print "oi"
-                resposta = self.process_data(self.mensagem[0:quantidade_bytes])  # só envia o conteúdo de um único pacote
+                    print("oi")
+                resposta = self.process_data(self.mensagem[0:quantidade_bytes])  # sÃ³ envia o conteÃºdo de um Ãºnico pacote
                 if resposta is not None:
                     self.conn.sendall(resposta)
 
-                # Verifica se a decodificação dos dados recebidos deve prosseguir
+                # Verifica se a decodificaÃ§Ã£o dos dados recebidos deve prosseguir
                 if quantidade_bytes < tamanho_mensagem:
                     for i in range(tamanho_mensagem):
                         self.copia_mensagem[i] = self.mensagem[i]
@@ -831,36 +832,36 @@ class MC:
                     tamanho_mensagem = 0
                     decodificar_dados_recebidos = False
 
-            else:  # Mensagem recebida está incompleta
+            else:  # Mensagem recebida estÃ¡ incompleta
                 decodificar_dados_recebidos = False
 
-    # #--------------------------------------------------------------------# #
-    #                        Métodos Auxiliares
-    # #--------------------------------------------------------------------# #
+    #--------------------------------------------------------------------# #
+    # â”€â”€â”€ MÃ©todos Auxiliares â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    #--------------------------------------------------------------------# #
 
-    def cria_servidor(self):
-        """Cria o servidor  na porta especificada"""
+    def cria_servidor(self, msg): #+ add 'msg' como argumento
+        """Cria o servidor na porta especificada"""
 
         try:
-            self.s.bind((self.TCP_HOST, self.TCP_PORT))  # linkando o servidor com algum endereço e porta
-            print u"Servidor para comunicação com o MC criado com sucesso!"
+            self.s.bind((self.TCP_HOST, self.TCP_PORT))  # linkando o servidor com algum endereÃ§o e porta
+            print(u"Servidor para comunicaÃ§Ã£o com o MC criado com sucesso!")
             return True
-        except socket.error, msg:
-            ctypes.windll.user32.MessageBoxW(0, u"Link com a porta especificada para o servidor não criado! Códido do erro " + str(msg[0]) + u"Mensagem: "
-                                             + str(msg[1]), u"Conexão com o Módulo Central", 0)
+        except (socket.error, msg):
+            ctypes.windll.user32.MessageBoxW(0, u"Link com a porta especificada para o servidor nÃ£o criado! CÃ³dido do erro " + str(msg[0]) + u"Mensagem: "
+                                             + str(msg[1]), u"ConexÃ£o com o MÃ³dulo Central", 0)
             return False
 
     def modo_escuta(self):
-        """Coloca o servidor no modo de escuta. Além disso, deixa o servidor esperando por uma conexão."""
-        self.s.listen(10)  # Verificar se o número de conexões possíveis pode afetar o funcionamento do nosso software
+        """Coloca o servidor no modo de escuta. AlÃ©m disso, deixa o servidor esperando por uma conexÃ£o."""
+        self.s.listen(10)  # Verificar se o nÃºmero de conexÃµes possÃ­veis pode afetar o funcionamento do nosso software
         self.conn, self.add = self.s.accept()
-        print "Conectado a " + self.add[0] + ":" + str(self.add[1])
+        print("Conectado a " + self.add[0] + ":" + str(self.add[1]))
 
         data = None
         while True:
-            data = self.conn.recv(16384)  # Tamanho do Buffer settado para o mesmo que o da comunicação com o DSSim
-            # print data
-            # print type(data)
+            data = self.conn.recv(16384)  # Tamanho do Buffer settado para o mesmo que o da comunicaÃ§Ã£o com o DSSim
+            # print(data)
+            # print(type(data))
             # if not data:
                 #  break
             if data is not None:
@@ -869,23 +870,23 @@ class MC:
             # if resposta is not None:
             #     self.conn.sendall(resposta)
 
-        self.conn.close()  # Verificar como arrumar essa questão do término da comunicação.
+        self.conn.close()  # Verificar como arrumar essa questÃ£o do tÃ©rmino da comunicaÃ§Ã£o.
         self.s.close()
         return 0
 
 
 def reconstroi_msg(data):
-    """ Função que reconstrói uma mensagem recebida do Módulo Central"""
+    """ FunÃ§Ã£o que reconstrÃ³i uma mensagem recebida do MÃ³dulo Central"""
 
     funcao = int(ord(data[0]))
     mensagem = ""
 
-    if funcao == 99:  # Retorna ID do Equipamento por meio de Código
+    if funcao == 99:  # Retorna ID do Equipamento por meio de CÃ³digo
 
-        # Essa função não vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o nÃ£o vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 6 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2
         # Byte 4: Hora
@@ -893,32 +894,32 @@ def reconstroi_msg(data):
         # Byte 6: Segundo
 
         # Mais 6 Bytes que descrevem o equipamento:
-        # Byte 7: Número do Tipo do Equipamento
+        # Byte 7: NÃºmero do Tipo do Equipamento
         # Byte 8: Id do Equipamento (Byte 1) = 0
         # Byte 9: Id do Equipamento (Byte 2) = 0
         # Byte 10: Id do Equipamento (Byte 3) = 0
         # Byte 11: Id do Equipamento (Byte 4) = 0
-        # Byte 12 a N: Código do Equipamento
+        # Byte 12 a N: CÃ³digo do Equipamento
 
         for i in range(len(data)):
-            if ord(data[i]) == 0:  # não adicionar espaços em branco que vem na mensagem...
+            if ord(data[i]) == 0:  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 continue
             if i <= 10:
                 mensagem = mensagem + str(ord(data[i])) + ";"
             else:  # i > 10:
                 mensagem = mensagem + data[i]
-            # dado uma string de comprimento unitário, a função ord retorna o valor do byte quando o argumento
-        # é uma string de 8-bit
+            # dado uma string de comprimento unitÃ¡rio, a funÃ§Ã£o ord retorna o valor do byte quando o argumento
+        # Ã© uma string de 8-bit
         mensagem = mensagem + ";"
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
-    elif funcao == 1:  # Solicitação de Registros
+    elif funcao == 1:  # SolicitaÃ§Ã£o de Registros
 
-        # Essa função não vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o nÃ£o vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 6 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
@@ -928,14 +929,14 @@ def reconstroi_msg(data):
         # Mais 5 Bytes que descrevem o equipamento para cada equipamento:
 
         # Equipamento 1:
-        # Byte 7: Número do Tipo do Equipamento
+        # Byte 7: NÃºmero do Tipo do Equipamento
         # Byte 8: Id do Equipamento (Byte 1)
         # Byte 9: Id do Equipamento (Byte 2)
         # Byte 10: Id do Equipamento (Byte 3)
         # Byte 11: Id do Equipamento (Byte 4)
 
         # Equipamento 2:
-        # Byte 12: Número do Tipo do Equipamento
+        # Byte 12: NÃºmero do Tipo do Equipamento
         # Byte 13: Id do Equipamento (Byte 1)
         # Byte 14: Id do Equipamento (Byte 2)
         # Byte 15: Id do Equipamento (Byte 3)
@@ -945,25 +946,25 @@ def reconstroi_msg(data):
 
         count = 0
         for i in range(len(data)):
-            if (ord(data[i]) == 0 and i == 2) or i == (7 + 5*count + 1) or i == (7 + 5*count + 2) or i == (7 + 5*count + 3):  # não adicionar espaços em branco que vem na mensagem...
+            if (ord(data[i]) == 0 and i == 2) or i == (7 + 5*count + 1) or i == (7 + 5*count + 2) or i == (7 + 5*count + 3):  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 continue
             if i == (7 + 5*count):  # 7, 12, 17,...
                 mensagem = mensagem + str(monta_inteiro_from_bytes(data[(7 + 5*count): (7 + 5*count + 4)])) + ';'
 
             else:
                 if i == (11 + 5*count):
-                    count = count + 1    # Se i == 11, é porque já passou para o segundo equipamento, portanto, incrementar count
+                    count = count + 1    # Se i == 11, Ã© porque jÃ¡ passou para o segundo equipamento, portanto, incrementar count
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
-    elif funcao == 3:  # Alteração de Estado em Chaves
+    elif funcao == 3:  # AlteraÃ§Ã£o de Estado em Chaves
 
-        # Essa função já vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o jÃ¡ vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 6 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
@@ -972,7 +973,7 @@ def reconstroi_msg(data):
 
         # Mais 6 Bytes que descrevem a chave selecionada:
 
-        # Byte 7: Número do Tipo do Equipamento
+        # Byte 7: NÃºmero do Tipo do Equipamento
         # Byte 8: Id do Equipamento (Byte 1)
         # Byte 9: Id do Equipamento (Byte 2)
         # Byte 10: Id do Equipamento (Byte 3)
@@ -980,7 +981,7 @@ def reconstroi_msg(data):
         # Byte 12: Novo estado da chave
 
         for i in range(len(data)):
-            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # não adicionar espaços em branco que vem na mensagem...
+            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 continue
             elif i == 7:
                 mensagem = mensagem + str(monta_inteiro_from_bytes(data[7:11])) + ';'
@@ -988,62 +989,62 @@ def reconstroi_msg(data):
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
-    elif funcao == 4:  # Simulação de Falta
+    elif funcao == 4:  # SimulaÃ§Ã£o de Falta
 
-        # Essa função já vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o jÃ¡ vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 7 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
         # Byte 5: Minuto
         # Byte 6: Segundo
 
-        # Informações do Equipamento:
+        # InformaÃ§Ãµes do Equipamento:
 
-        # Byte 7: Número do Tipo do Equipamento (1 ou 2)
+        # Byte 7: NÃºmero do Tipo do Equipamento (1 ou 2)
         # Byte 8: Id do Equipamento (Byte 1) - Inteiro
         # Byte 9: Id do Equipamento (Byte 2) - Inteiro
         # Byte 10: Id do Equipamento (Byte 3) - Inteiro
         # Byte 11: Id do Equipamento (Byte 4) - Inteiro
 
-        # Informações do Curto em si
+        # InformaÃ§Ãµes do Curto em si
 
         # Byte 12: Tipo de Curto-Circuito (Valor de 0 a 4 conforme tabela de curtos)
-        # Byte 13: Valor % referente a distância entre a barra 1 o defeito / tamanho do trecho (Byte 1) - Float
-        # Byte 14: Valor % referente a distância entre a barra 1 o defeito / tamanho do trecho (Byte 2) - Float
-        # Byte 15: Valor % referente a distância entre a barra 1 o defeito / tamanho do trecho (Byte 3) - Float
-        # Byte 16: Valor % referente a distância entre a barra 1 o defeito / tamanho do trecho (Byte 4) - Float
-        # Byte 17: Valor da impedância de defeito em Ohms. (Byte 1) - Float
-        # Byte 18: Valor da impedância de defeito em Ohms. (Byte 2) - Float
-        # Byte 19: Valor da impedância de defeito em Ohms. (Byte 3) - Float
-        # Byte 20: Valor da impedância de defeito em Ohms. (Byte 4) - Float
-        # Byte 21: Indicação de cálculo de curto-circuito com (1) ou sem pré-falta (0).
+        # Byte 13: Valor % referente a distÃ¢ncia entre a barra 1 o defeito / tamanho do trecho (Byte 1) - Float
+        # Byte 14: Valor % referente a distÃ¢ncia entre a barra 1 o defeito / tamanho do trecho (Byte 2) - Float
+        # Byte 15: Valor % referente a distÃ¢ncia entre a barra 1 o defeito / tamanho do trecho (Byte 3) - Float
+        # Byte 16: Valor % referente a distÃ¢ncia entre a barra 1 o defeito / tamanho do trecho (Byte 4) - Float
+        # Byte 17: Valor da impedÃ¢ncia de defeito em Ohms. (Byte 1) - Float
+        # Byte 18: Valor da impedÃ¢ncia de defeito em Ohms. (Byte 2) - Float
+        # Byte 19: Valor da impedÃ¢ncia de defeito em Ohms. (Byte 3) - Float
+        # Byte 20: Valor da impedÃ¢ncia de defeito em Ohms. (Byte 4) - Float
+        # Byte 21: IndicaÃ§Ã£o de cÃ¡lculo de curto-circuito com (1) ou sem prÃ©-falta (0).
 
         for i in range(len(data)):
-            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10 or i == 13 or i == 14 or i == 15 or i == 17 or i == 18 or i == 19:  # não adicionar espaços em branco que vem na mensagem...
+            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10 or i == 13 or i == 14 or i == 15 or i == 17 or i == 18 or i == 19:  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 continue
             elif i == 7:
                 mensagem = mensagem + str(monta_inteiro_from_bytes(data[7:11])) + ';'
-            elif i == 12:  # Distância
+            elif i == 12:  # DistÃ¢ncia
                 mensagem = mensagem + str(monta_float_from_bytes(data[12:16])) + ';'
-            elif i == 16:  # Impedância
+            elif i == 16:  # ImpedÃ¢ncia
                 mensagem = mensagem + str(monta_float_from_bytes(data[16:20])) + ';'
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
     elif funcao == 5:  # Elimina Falta
 
-        # Essa função já vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o jÃ¡ vem com a quantidade de bytes fechada.
 
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
@@ -1051,20 +1052,20 @@ def reconstroi_msg(data):
         # Byte 6: Segundo
 
         for i in range(len(data)):
-            if ord(data[i]) == 0 and i == 2:  # não adicionar espaços em branco que vem na mensagem...
+            if ord(data[i]) == 0 and i == 2:  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 continue
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
-    elif funcao == 6:  # Alteração no Tap de Transformador
+    elif funcao == 6:  # AlteraÃ§Ã£o no Tap de Transformador
 
-        # Essa função já vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o jÃ¡ vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 7 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
@@ -1073,17 +1074,17 @@ def reconstroi_msg(data):
 
         # Mais 5 Bytes que descrevem o transformador selecionado:
 
-        # Byte 7: Número do Tipo do Equipamento
+        # Byte 7: NÃºmero do Tipo do Equipamento
         # Byte 8: Id do Equipamento (Byte 1) - Inteiro
         # Byte 9: Id do Equipamento (Byte 2) - Inteiro
         # Byte 10: Id do Equipamento (Byte 3) - Inteiro
         # Byte 11: Id do Equipamento (Byte 4) - Inteiro
 
-        # E 1 Byte com a variação do tap
-        # Byte 12: Variação (Byte) - Inteiro sem sinal. Precisamos converter de NotSignedToSigned
+        # E 1 Byte com a variaÃ§Ã£o do tap
+        # Byte 12: VariaÃ§Ã£o (Byte) - Inteiro sem sinal. Precisamos converter de NotSignedToSigned
 
         for i in range(len(data)):
-            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # não adicionar espaços em branco que vem na mensagem...
+            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 continue
             if i == 7:
                 mensagem = mensagem + str(monta_inteiro_from_bytes(data[7:11])) + ';'
@@ -1092,17 +1093,17 @@ def reconstroi_msg(data):
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
-    elif funcao == 7:  # Alteração no Tap de Regulador de Tensão
-        return "funcao 7 ainda não implementada"
-    elif funcao == 8 or funcao == 11:  # Funções 8 e 11 possuem a mesma estrutura (Alteração no valor de reativo BC e Alteração em estado de BC, respectivamente)
+    elif funcao == 7:  # AlteraÃ§Ã£o no Tap de Regulador de TensÃ£o
+        return "funcao 7 ainda nÃ£o implementada"
+    elif funcao == 8 or funcao == 11:  # FunÃ§Ãµes 8 e 11 possuem a mesma estrutura (AlteraÃ§Ã£o no valor de reativo BC e AlteraÃ§Ã£o em estado de BC, respectivamente)
 
-        # Essa função já vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o jÃ¡ vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 6 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
@@ -1111,22 +1112,22 @@ def reconstroi_msg(data):
 
         # Mais 6 Bytes que descrevem a chave selecionada:
 
-        # Byte 7: Número do Tipo do Equipamento
+        # Byte 7: NÃºmero do Tipo do Equipamento
         # Byte 8: Id do Equipamento (Byte 1) - Inteiro
         # Byte 9: Id do Equipamento (Byte 2) - Inteiro
         # Byte 10: Id do Equipamento (Byte 3) - Inteiro
         # Byte 11: Id do Equipamento (Byte 4) - Inteiro
 
-        # Byte 12: Nova Potência Reativa (Byte 1)  - Float Função 8 ; # Byte 12: Novo Estado do BC (Byte 1)  - Int Função 8 ;
-        # Byte 13: Nova Potência Reativa (Byte 2)  - Float Função 8 ; # Byte 13: Nova Estado do BC (Byte 2)  - Int Função 8 ;
-        # Byte 14: Nova Potência Reativa (Byte 3)  - Float Função 8 ; # Byte 14: Nova Estado do BC (Byte 3)  - Int Função 8 ;
-        # Byte 15: Nova Potência Reativa (Byte 4)  - Float Função 8 ; # Byte 15: Nova Estado do BC (Byte 4)  - Int Função 8 ;
+        # Byte 12: Nova PotÃªncia Reativa (Byte 1)  - Float FunÃ§Ã£o 8 ; # Byte 12: Novo Estado do BC (Byte 1)  - Int FunÃ§Ã£o 8 ;
+        # Byte 13: Nova PotÃªncia Reativa (Byte 2)  - Float FunÃ§Ã£o 8 ; # Byte 13: Nova Estado do BC (Byte 2)  - Int FunÃ§Ã£o 8 ;
+        # Byte 14: Nova PotÃªncia Reativa (Byte 3)  - Float FunÃ§Ã£o 8 ; # Byte 14: Nova Estado do BC (Byte 3)  - Int FunÃ§Ã£o 8 ;
+        # Byte 15: Nova PotÃªncia Reativa (Byte 4)  - Float FunÃ§Ã£o 8 ; # Byte 15: Nova Estado do BC (Byte 4)  - Int FunÃ§Ã£o 8 ;
 
         count = 0
         for i in range(len(data)):
-            if (ord(data[i]) == 0 and i == 2) or i == (7 + 4*count + 1) or i == (7 + 4*count + 2) or i == (7 + 4*count + 3):  # não adicionar espaços em branco que vem na mensagem...
+            if (ord(data[i]) == 0 and i == 2) or i == (7 + 4*count + 1) or i == (7 + 4*count + 2) or i == (7 + 4*count + 3):  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 if i == (10 + 4*count):
-                    count = count + 1    # Se i == 11, é porque já passou para o segundo equipamento, portanto, incrementar count
+                    count = count + 1    # Se i == 11, Ã© porque jÃ¡ passou para o segundo equipamento, portanto, incrementar count
                 continue
             if i == (7 + 4*count):  # 7, 12, 17,...
                 if count == 0 or (count == 1 and funcao == 11):
@@ -1136,17 +1137,17 @@ def reconstroi_msg(data):
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
-    elif funcao == 9:  # Alteração no valor de suprimento
-        return "funcao 9 ainda não implementada"
-    elif funcao == 10:  # Alteração no valor de carga
+    elif funcao == 9:  # AlteraÃ§Ã£o no valor de suprimento
+        return "funcao 9 ainda nÃ£o implementada"
+    elif funcao == 10:  # AlteraÃ§Ã£o no valor de carga
 
-        # Essa função já vem com a quantidade de bytes fechada.
+        # Essa funÃ§Ã£o jÃ¡ vem com a quantidade de bytes fechada.
 
         # Essa mensagem possui sempre 6 bytes iniciais
-        # Byte 1: Função
+        # Byte 1: FunÃ§Ã£o
         # Byte 2: Quantidade de Bytes - byte 1
         # Byte 3: Quantidade de Bytes - byte 2 = 0
         # Byte 4: Hora
@@ -1155,27 +1156,27 @@ def reconstroi_msg(data):
 
         # Mais 6 Bytes que descrevem a chave selecionada:
 
-        # Byte 7: Número do Tipo do Equipamento
+        # Byte 7: NÃºmero do Tipo do Equipamento
         # Byte 8: Id do Equipamento (Byte 1) - Inteiro
         # Byte 9: Id do Equipamento (Byte 2) - Inteiro
         # Byte 10: Id do Equipamento (Byte 3) - Inteiro
         # Byte 11: Id do Equipamento (Byte 4) - Inteiro
 
-        # Byte 12: Nova Potência Ativa (Byte 1)  - Float
-        # Byte 13: Nova Potência Ativa (Byte 2)  - Float
-        # Byte 14: Nova Potência Ativa (Byte 3)  - Float
-        # Byte 15: Nova Potência Ativa (Byte 4)  - Float
+        # Byte 12: Nova PotÃªncia Ativa (Byte 1)  - Float
+        # Byte 13: Nova PotÃªncia Ativa (Byte 2)  - Float
+        # Byte 14: Nova PotÃªncia Ativa (Byte 3)  - Float
+        # Byte 15: Nova PotÃªncia Ativa (Byte 4)  - Float
 
-        # Byte 16: Nova Potência Reativa (Byte 1)  - Float
-        # Byte 17: Nova Potência Reativa (Byte 2)  - Float
-        # Byte 18: Nova Potência Reativa (Byte 3)  - Float
-        # Byte 19: Nova Potência Reativa (Byte 4)  - Float
+        # Byte 16: Nova PotÃªncia Reativa (Byte 1)  - Float
+        # Byte 17: Nova PotÃªncia Reativa (Byte 2)  - Float
+        # Byte 18: Nova PotÃªncia Reativa (Byte 3)  - Float
+        # Byte 19: Nova PotÃªncia Reativa (Byte 4)  - Float
 
         count = 0
         for i in range(len(data)):
-            if (ord(data[i]) == 0 and i == 2) or i == (7 + 4 * count + 1) or i == (7 + 4 * count + 2) or i == (7 + 4 * count + 3):  # não adicionar espaços em branco que vem na mensagem...
+            if (ord(data[i]) == 0 and i == 2) or i == (7 + 4 * count + 1) or i == (7 + 4 * count + 2) or i == (7 + 4 * count + 3):  # nÃ£o adicionar espaÃ§os em branco que vem na mensagem...
                 if i == (10 + 4 * count):
-                    count = count + 1  # Se i == 11, é porque já passou para o segundo equipamento, portanto, incrementar count
+                    count = count + 1  # Se i == 11, Ã© porque jÃ¡ passou para o segundo equipamento, portanto, incrementar count
                 continue
             if i == (7 + 4 * count):  # 7, 12, 17,...
                 if count == 0:
@@ -1185,17 +1186,17 @@ def reconstroi_msg(data):
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
-        # print "msg reconstruida, " + mensagem
+        # print("msg reconstruida, " + mensagem)
         return str(mensagem)
 
     else:
-        return u"Função não identificada, mensagem não pôde ser reconstruída!"
+        return u"FunÃ§Ã£o nÃ£o identificada, mensagem nÃ£o pÃ´de ser reconstruÃ­da!"
 
 
 def func100acknowledgment(funcao, flag):
-    """ Funcao resposta para o MC às funções 03, 04, 05, 06, 07, 08, 09, 10 e 11. Se todos os dados
-    foram recebidos e o DSSim conseguiu executar a sua respectiva função, retorna flag = 1
-    se não, flag = 0."""
+    """ Funcao resposta para o MC Ã s funÃ§Ãµes 03, 04, 05, 06, 07, 08, 09, 10 e 11. Se todos os dados
+    foram recebidos e o DSSim conseguiu executar a sua respectiva funÃ§Ã£o, retorna flag = 1
+    se nÃ£o, flag = 0."""
     msg_retornada = [chr(0)] * 5
 
     msg_retornada[0] = chr(100)

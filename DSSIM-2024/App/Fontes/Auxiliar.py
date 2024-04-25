@@ -1,7 +1,7 @@
-###  # -*- coding: iso-8859-15 -*-
+###  # -*- coding: UTF-8 -*-
 
 """
-Unidade com fun??es auxiliares.
+Unidade com funções auxiliares.
 """
 
 __author__ = 'CelsoRocha' and 'Paulo Radatz'
@@ -25,8 +25,19 @@ def escreve_lista_par(nome, lista):
     return 1
 
 
+def monta_byte_to_signed_int(string):
+    if 0 <= int(string) <= 127:
+        return int(string)
+    else:
+        return int(string) - 256
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── Funções Interpretes De Bytes ─────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 def monta_inteiro_from_bytes(string):
-    """ Fun??o que recebe uma string de bytes e retorna um inteiro correspondente."""
+    """ Função que recebe uma string de bytes e retorna um inteiro correspondente."""
     if type(string) is list:
         string = "".join(string)  # concatena e converte para string
     if len(string) < 8:
@@ -38,15 +49,8 @@ def monta_inteiro_from_bytes(string):
     return struct.unpack('<Q', string)[0]
 
 
-def monta_byte_to_signed_int(string):
-    if 0 <= int(string) <= 127:
-        return int(string)
-    else:
-        return int(string) - 256
-
-
 def monta_float_from_bytes(string):
-    """ Fun??o que recebe uma string de bytes e retorna um ponto flutuante correspondente"""
+    """ Função que recebe uma string de bytes e retorna um ponto flutuante correspondente"""
     if len(string) < 4:
         tamanho = len(string)
         while tamanho < 5:
