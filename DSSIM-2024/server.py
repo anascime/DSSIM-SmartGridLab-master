@@ -14,6 +14,9 @@ TCP_PORT = 6345
 BUFFER_SIZE = 8192  # Qual valor utilizar aqui?
 
 dssim_obj = DSSIM.DSSim(TCP_IP, TCP_PORT, BUFFER_SIZE, None)    #> teste
+dssim_obj.connect()
+dssim_obj.armazena_path()
+dssim_obj.armazena_nomes_elementos()
 
 def process_data(msg):
         """ Método responsável por processar a mensagem recebida pelo cliente MC,
@@ -44,8 +47,8 @@ def process_data(msg):
                 print('tipo_equipamento: ', tipo_equipamento)
 
                 # id_equipamento = 6285  #< int númro grande dá problema
-                id_equipamento = 1  #> int funcionando
-                # id_equipamento = dssim_obj.retorna_id(codigo_equipamento, tipo_equipamento)  # int
+                # id_equipamento = 1  #> int funcionando
+                id_equipamento = dssim_obj.retorna_id(codigo_equipamento, tipo_equipamento)  # int
                 print('id_equipamento: ', id_equipamento)
 
                 qtde_bytes = 43   # Usando o mesmo valor definido no C++ builder quando a função 99 é enviada para o Simulador.
@@ -826,8 +829,8 @@ def decodifica_mensagem(conn, data):
                 # print('resposta: ', resposta)
 
                 print('\nlen_data: ', data_len)
-                print('data_encode:\t\t', data.encode())
-                print('resposta_encode:\t', resposta.encode())
+                # print('data_encode:\t\t', data.encode())
+                # print('resposta_encode:\t', resposta.encode())
                 print(f'len_resposta: {resposta_len}\n')
 
                 # conn.sendall(resposta)

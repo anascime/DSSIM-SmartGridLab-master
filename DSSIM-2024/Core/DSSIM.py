@@ -16,7 +16,10 @@ import socket
 import ctypes
 import time
 import datetime
+import pandas as pd
 
+with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
+    pass
 from Core.Auxiliar import *
 
 
@@ -63,7 +66,8 @@ class DSSim:
 
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
-        self.s.sendall(message)
+        # self.s.sendall(message)
+        self.s.send(message.encode())
 
         data = self.s.recv(self.BUFFER_SIZE)
         if self.form is not None:
@@ -419,7 +423,11 @@ class DSSim:
         """ Método que recebe o código de um equipamento do Sinap e retorna o seu ID"""
         if self.frame_guids is not None:
             if tipo_equipamento is not "1":  # Se não for Barra
-                id = int(self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
+                cod_sin = codigo_equipamento_sinap.lower()
+                # print(self.frame_guids.tail(31))
+                df = self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == cod_sin), ["Id Sinap"]]
+                id = int(df.values[0][0])
+                # id = int(self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
             else:
                 id = int(self.frame_buses.loc[(self.frame_buses["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
             return id
@@ -509,7 +517,8 @@ class DSSim:
         message = "25;" + tamanho_hex + comando + ";"
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
-        self.s.sendall(message)
+        # self.s.sendall(message)
+        self.s.send(message.encode())
 
         data = self.s.recv(self.BUFFER_SIZE)
         if self.form is not None:
@@ -627,22 +636,26 @@ class DSSim:
     def armazena_path(self):
         """ Método que armazena o caminho dos dados do DSSim. Será utilizado posteriormente quando formos ler os
         arquivos gerados por comandos "export" """
-        self.data_path = self.send_dss_command("get datapath")
+        self.data_path = self.send_dss_command("get datapath").decode()
         print(self.data_path)
 
     def armazena_nomes_elementos(self):
         """ Método que exporta as GUIDs de cada um dos elementos da rede. Usaremos este método para
          armazenar os nomes de todos os elementos em um dataframe somente uma vez"""
-        self.send_dss_command("export guids")     # Verificar pq não está retornando o endereço do arquivo exportado
-        casename = self.send_dss_command("get casename")
+        self.send_dss_command("export uuids")     #* substituição guids → uuids
+        # self.send_dss_command("export guids")     # Verificar pq não está retornando o endereço do arquivo exportado
+        casename = self.send_dss_command("get casename").decode() #> casename = circuit
         nomes = ["Completo"]
-        self.frame_guids = pd.read_csv(self.data_path + "/" + casename + "_EXP_GUIDS.CSV", engine='python', names=nomes)
+        self.frame_guids = pd.read_csv(self.data_path + "/" + casename + "_EXP_UUIDS.CSV", engine='python', names=nomes)
 
         self.frame_guids["Nome Completo"] = self.frame_guids["Completo"].str.split(' ').str.get(0)
         self.frame_guids["Tipo Elemento"] = self.frame_guids["Nome Completo"].str.split('.').str.get(0)
         self.frame_guids["Nome OpenDSS"] = self.frame_guids["Nome Completo"].str.split('.').str.get(1)
-        self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(0)
-        self.frame_guids["Id Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(1)
+        self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"]
+        self.frame_guids["Id Sinap"] = self.frame_guids.index
+        # self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(0)
+        # self.frame_guids["Id Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(1)
+        print('self.frame_guids:\n', self.frame_guids.head())
 
         self.frame_guids.drop("Completo", axis=1, inplace=True)
 

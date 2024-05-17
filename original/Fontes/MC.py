@@ -212,7 +212,7 @@ class MC:
                         voltages_1 = self.dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                         voltages_2 = self.dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         powers_total = self.dssim_obj.get_total_powers(nome_opendss, 1)  # salva array com registros
-                        power_phase_a = self.dssim_obj.get_phase_powers(nome_opendss, 1, 1)  # Cuidado aqui, precisamos verificar as fases disponíveis antes...
+                        power_phase_a = self.dssim_obj.get_phase_powers(nome_opendss, 1, 1)  #< Cuidado aqui, precisamos verificar as fases disponíveis antes...
                         power_phase_b = self.dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = self.dssim_obj.get_phase_powers(nome_opendss, 1, 3)
 
