@@ -642,7 +642,7 @@ class DSSim:
     def armazena_nomes_elementos(self):
         """ Método que exporta as GUIDs de cada um dos elementos da rede. Usaremos este método para
          armazenar os nomes de todos os elementos em um dataframe somente uma vez"""
-        self.send_dss_command("export uuids")     #* substituição guids → uuids
+        self.send_dss_command("export uuids")  #* substituição guids → uuids
         # self.send_dss_command("export guids")     # Verificar pq não está retornando o endereço do arquivo exportado
         casename = self.send_dss_command("get casename").decode() #> casename = circuit
         nomes = ["Completo"]

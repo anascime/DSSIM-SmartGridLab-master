@@ -37,3 +37,4 @@ ARQUIVOS_RODAR_E_MC_REV2**
 .idea/
 **.pyc
 venv/
+.vscode/
