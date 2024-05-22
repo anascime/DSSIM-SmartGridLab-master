@@ -37,7 +37,7 @@ def monta_byte_to_signed_int(string):
 # ──────────────────────────────────────────────────────────────────────────────
 
 def monta_inteiro_from_bytes(string):
-    """ Função que recebe uma string de bytes e retorna um inteiro correspondente."""
+    """Função que recebe uma string de bytes e retorna um inteiro correspondente"""
     if type(string) is list:
         string = "".join(string)  # concatena e converte para string
     if len(string) < 8:
@@ -50,7 +50,7 @@ def monta_inteiro_from_bytes(string):
 
 
 def monta_float_from_bytes(string):
-    """ Função que recebe uma string de bytes e retorna um ponto flutuante correspondente"""
+    """Função que recebe uma string de bytes e retorna um ponto flutuante correspondente"""
     if len(string) < 4:
         tamanho = len(string)
         while tamanho < 5:

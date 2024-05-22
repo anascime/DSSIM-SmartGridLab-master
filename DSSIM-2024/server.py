@@ -8,6 +8,7 @@ import threading
 # import thread
 # import Core.MC as coreMC
 import Core.DSSIM as DSSIM
+import App.Fontes.Auxiliar as aux
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
@@ -19,9 +20,12 @@ dssim_obj.armazena_path()
 dssim_obj.armazena_nomes_elementos()
 
 def process_data(msg):
-        """ Método responsável por processar a mensagem recebida pelo cliente MC,
-         chamando a respectiva função na comunicação com o servidor DSSim e
-         enviando a devida mensagem de volta ao cliente MC."""
+        """Processa mensagens entres MC e DSSim
+
+        Método responsável por processar a mensagem recebida pelo cliente MC,
+        chamando a respectiva função na comunicação com o servidor DSSim e
+        enviando a devida mensagem de volta ao cliente MC
+        """
 
         # tamanho = len(data)
         # funcao = ord(data[0])
@@ -129,8 +133,8 @@ def process_data(msg):
                 msg_retornada = [chr(0)] * 7  # 7 primeiros bytes, depois vamos concatenar
                 # msg_retornada = []  # resolver problema aqui, na hora de montar a msg
                 msg_retornada[0] = chr(2)
-                msg_retornada[1] = struct.pack('<Q', qtde_bytes)[0]
-                msg_retornada[2] = struct.pack('<Q', qtde_bytes)[1]
+                msg_retornada[1] = chr(struct.pack('<Q', qtde_bytes)[0])
+                msg_retornada[2] = chr(struct.pack('<Q', qtde_bytes)[1])
                 msg_retornada[3] = chr(int(hora))
                 msg_retornada[4] = chr(int(minuto))
                 msg_retornada[5] = chr(int(segundo))
@@ -294,7 +298,7 @@ def process_data(msg):
 
                         # Id da barra de referência (assumi como sendo a barra 1 da chave) Convertendo o valor do ID para 4 bytes segundo o formato Little Endian
                         barra_ref_nome = dssim_obj.send_dss_command("? " + nome_opendss + ".bus1")
-                        id_barra_ref = int(barra_ref_nome.split("_id")[1].split(".")[0])
+                        id_barra_ref = int(barra_ref_nome.split(b"_id")[1].split(b".")[0])
                         equipamento.append(struct.pack('<Q', id_barra_ref)[0])
                         equipamento.append(struct.pack('<Q', id_barra_ref)[1])
                         equipamento.append(struct.pack('<Q', id_barra_ref)[2])
@@ -432,7 +436,7 @@ def process_data(msg):
                         kvar = dssim_obj.get_capacitor_kvar(nome_opendss)
                         equipamento.append(struct.pack('<f', kvar)[0:4])  # Potência Reativa kvar
 
-                        estado = dssim_obj.get_capacitor_state(nome_opendss)
+                        estado = dssim_obj.get_capacitor_state(nome_opendss)  # Estado do capacitor
                         equipamento.append(chr(estado))
 
                     elif tipo_equipamento == "8":  # Gerador
@@ -928,7 +932,7 @@ def reconstroi_msg(data):
             if (ord(data[i]) == 0 and i == 2) or i == (7 + 5*count + 1) or i == (7 + 5*count + 2) or i == (7 + 5*count + 3):  # não adicionar espaços em branco que vem na mensagem...
                 continue
             if i == (7 + 5*count):  # 7, 12, 17,...
-                mensagem = mensagem + str(monta_inteiro_from_bytes(data[(7 + 5*count): (7 + 5*count + 4)])) + ';'
+                mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[(7 + 5*count): (7 + 5*count + 4)])) + ';'
 
             else:
                 if i == (11 + 5*count):
@@ -963,7 +967,7 @@ def reconstroi_msg(data):
             if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # não adicionar espaços em branco que vem na mensagem...
                 continue
             elif i == 7:
-                mensagem = mensagem + str(monta_inteiro_from_bytes(data[7:11])) + ';'
+                mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[7:11])) + ';'
 
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
@@ -1008,11 +1012,11 @@ def reconstroi_msg(data):
             if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10 or i == 13 or i == 14 or i == 15 or i == 17 or i == 18 or i == 19:  # não adicionar espaços em branco que vem na mensagem...
                 continue
             elif i == 7:
-                mensagem = mensagem + str(monta_inteiro_from_bytes(data[7:11])) + ';'
+                mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[7:11])) + ';'
             elif i == 12:  # Distância
-                mensagem = mensagem + str(monta_float_from_bytes(data[12:16])) + ';'
+                mensagem = mensagem + str(aux.monta_float_from_bytes(data[12:16])) + ';'
             elif i == 16:  # Impedância
-                mensagem = mensagem + str(monta_float_from_bytes(data[16:20])) + ';'
+                mensagem = mensagem + str(aux.monta_float_from_bytes(data[16:20])) + ';'
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
@@ -1066,7 +1070,7 @@ def reconstroi_msg(data):
             if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # não adicionar espaços em branco que vem na mensagem...
                 continue
             if i == 7:
-                mensagem = mensagem + str(monta_inteiro_from_bytes(data[7:11])) + ';'
+                mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[7:11])) + ';'
             elif i == 11:
                 mensagem = mensagem + str(monta_byte_to_signed_int(str(ord(data[i])))) + ';'
             else:
@@ -1111,9 +1115,9 @@ def reconstroi_msg(data):
                 continue
             if i == (7 + 4*count):  # 7, 12, 17,...
                 if count == 0 or (count == 1 and funcao == 11):
-                    mensagem = mensagem + str(monta_inteiro_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
+                    mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
                 elif count == 1:
-                    mensagem = mensagem + str(monta_float_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
+                    mensagem = mensagem + str(aux.monta_float_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
@@ -1161,9 +1165,9 @@ def reconstroi_msg(data):
                 continue
             if i == (7 + 4 * count):  # 7, 12, 17,...
                 if count == 0:
-                    mensagem = mensagem + str(monta_inteiro_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
+                    mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
                 else:
-                    mensagem = mensagem + str(monta_float_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
+                    mensagem = mensagem + str(aux.monta_float_from_bytes(data[(7 + 4 * count): (7 + 4 * count + 4)])) + ';'
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 

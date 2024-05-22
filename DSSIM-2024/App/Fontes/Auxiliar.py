@@ -45,12 +45,13 @@ def monta_inteiro_from_bytes(string):
         while tamanho < 9:
             string = string + "\x00"
             tamanho = len(string) + 1
-
-    return struct.unpack('<Q', string)[0]
+    stringb = string.encode()
+    # tx = b'\x00\x12\x04\x00\x00\x00\x00\x00'
+    return struct.unpack('<Q', stringb)[0]
 
 
 def monta_float_from_bytes(string):
-    """ Função que recebe uma string de bytes e retorna um ponto flutuante correspondente"""
+    """Função que recebe uma string de bytes e retorna um ponto flutuante correspondente"""
     if len(string) < 4:
         tamanho = len(string)
         while tamanho < 5:
