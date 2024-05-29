@@ -65,7 +65,7 @@ class DSSim:
             message = "02;"
 
         if self.form is not None:
-            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
         # self.s.send(message.encode())
         self.s.send(message.encode())
 
@@ -97,7 +97,7 @@ class DSSim:
             message = "04;"    # Não entendi o que está acontecendo aqui
 
         if self.form is not None:
-            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
         self.s.send(message.encode())
 
         data = self.s.recv(self.BUFFER_SIZE)
@@ -107,7 +107,7 @@ class DSSim:
 
         tamanho = int(data[:8], 16) + 8
 
-        lista = data[8:tamanho].split("\t")        # Separação utilizada é um tab
+        lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
         lista = [float(x) for x in lista]   # Converte para Float
 
         return lista
@@ -176,12 +176,8 @@ class DSSim:
         """
 
         self.send_dss_command("select " + element_name)
-        # currents = str(self.send_dss_command("currents"))
         currents = self.send_dss_command("currents")
-        # print(currents)
         currents = currents.replace(b" ", b"")  # remove os espaços em branco do bytes
-        # currents = bytes(currents)
-        # currents = currents.encode()  # b"b'0,0.0,0,0.0,0,0.0,'"
         currents = currents[:-1]  # deleta o último caractere, uma vírgula extra
         currents = currents.split(b",")
         currents = [float(x) for x in currents]  # Converte para Float
@@ -247,15 +243,23 @@ class DSSim:
         if classe_elemento.lower() == ("load" or "capacitor" or "reactor"):
             n_phases = len(powers)/2
             terminal = 1  # força leitura da potência do único terminal que tem
+
+            print('len(powers): ', len(powers))
+            print("n_phases = len(powers) / 2")
+            print(f'n_phases = {n_phases}')
         else:
             n_phases = len(powers) / 4
+
+            print('len(powers): ', len(powers))
+            print("n_phases = len(powers) / 4")
+            print(f'n_phases = {n_phases}')
 
         p_total_1 = 0
         q_total_1 = 0
         p_total_2 = 0
         q_total_2 = 0
 
-        for i in range(n_phases):
+        for i in range(n_phases):  #? o que fazer com valor quebrado de n_phases?
             p_total_1 = powers[2 * i] + p_total_1
             q_total_1 = powers[2 * i + 1] + q_total_1
 
@@ -290,15 +294,17 @@ class DSSim:
         n_phases = len(powers)/4
 
         if phase > n_phases:
-            ctypes.windll.user32.MessageBoxW(0, u"O elemento " + '"{}"'.format(element_name) + u" possui somente " + str(n_phases) +
-            u" fases. Fase " + str(phase) + u" solicitada.", u"Conexão DSSimPC-v2.0", 0)
+            ctypes.windll.user32.MessageBoxW(0, "O elemento " + '"{}"'.format(element_name) + " possui somente " + str(n_phases) +
+            " fases. Fase " + str(phase) + " solicitada.", "Conexão DSSimPC-v2.0", 0)
             return None
         else:
             powers_tupla = powers[6*(terminal-1) + 2*(phase-1)], powers[6*(terminal-1) + 2*(phase-1) + 1]   # P, Q
             return powers_tupla
 
     def get_transformer_tap(self, transformer_name, winding):
-        """Método que recebe o nome de um transformador e um enrolamento e retorna o tap atual desse enrolamento em pu e em passos"""
+        """Método que recebe o nome de um transformador e um enrolamento e
+        retorna o tap atual desse enrolamento em pu e em passos
+        """
 
         taps_array = self.send_dss_command("? " + transformer_name + ".taps")
         taps_array = taps_array[1:-3]  # deleta [ ....  , ]
@@ -306,8 +312,8 @@ class DSSim:
         taps_array = [float(x) for x in taps_array]
 
         if winding > len(taps_array):
-            ctypes.windll.user32.MessageBoxW(0, u"O transformador " + '"{}"'.format(transformer_name) + u" possui somente " + str(len(taps_array)) +
-                                             u" enrolamentos. Tap do enrolamento " + str(winding) + u" solicitado.", u"Conexão DSSimPC-v2.0", 0)
+            ctypes.windll.user32.MessageBoxW(0, "O transformador " + '"{}"'.format(transformer_name) + " possui somente " + str(len(taps_array)) +
+                                             " enrolamentos. Tap do enrolamento " + str(winding) + " solicitado.", "Conexão DSSimPC-v2.0", 0)
             return None
         else:
 
@@ -388,8 +394,8 @@ class DSSim:
         # 1º: Armazena dados necessários da linha
         length_original = float(self.send_dss_command("? " + nome_linha + ".length"))
         bus1_original_completo = self.send_dss_command("? " + nome_linha + ".bus1")
-        bus1_original_nome = bus1_original_completo.split(".", 1)[0]
-        bus1_original_phases_string = bus1_original_completo.split(".", 1)[1]
+        bus1_original_nome = bus1_original_completo.split(b".", 1)[0]
+        bus1_original_phases_string = bus1_original_completo.split(b".", 1)[1]
         bus2_original_completo = self.send_dss_command("? " + nome_linha + ".bus2")
 
         # 2º: Cria duas novas linhas em série cujo comprimento total é igual ao comprimento da linha original
@@ -402,7 +408,7 @@ class DSSim:
         self.send_dss_command(nome_linha + ".enabled=False")
 
         # 4º: Aplica a falta na barra auxiliar
-        resposta = self.set_new_bus_fault(bus1_original_nome + "_aux", tipo, resistencia)
+        resposta = self.set_new_bus_fault(bus1_original_nome + b"_aux", tipo, resistencia)
 
         return resposta
 
@@ -412,8 +418,8 @@ class DSSim:
         num_windings = int(self.send_dss_command("? " + transformer_name + ".windings"))
 
         if winding > num_windings:
-            ctypes.windll.user32.MessageBoxW(0, u"O transformador " + '"{}"'.format(transformer_name) + u" possui somente " + str(num_windings) +
-                                             u" enrolamentos. Tap do enrolamento " + str(winding) + u" solicitado.", u"Conexão DSSimPC-v2.0", 0)
+            ctypes.windll.user32.MessageBoxW(0, "O transformador " + '"{}"'.format(transformer_name) + " possui somente " + str(num_windings) +
+                                             " enrolamentos. Tap do enrolamento " + str(winding) + " solicitado.", "Conexão DSSimPC-v2.0", 0)
             return None
 
         self.send_dss_command(transformer_name + ".wdg=" + str(winding) + " tap=" + str(tap))
@@ -445,14 +451,17 @@ class DSSim:
     def retorna_id(self, codigo_equipamento_sinap, tipo_equipamento):
         """Método que recebe o código de um equipamento do Sinap e retorna o seu ID"""
         if self.frame_guids is not None:
-            if tipo_equipamento is not "1":  # Se não for Barra
-                cod_sin = codigo_equipamento_sinap.lower()
+            if tipo_equipamento is not "1":  #> não é Barra
                 # print(self.frame_guids.tail(31))
+                # id = int(self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
+                cod_sin = codigo_equipamento_sinap.lower()
                 df = self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == cod_sin), ["Id Sinap"]]
                 id = int(df.values[0][0])
-                # id = int(self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
-            else:
-                id = int(self.frame_buses.loc[(self.frame_buses["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
+            else:  #> é barra
+                # id = int(self.frame_buses.loc[(self.frame_buses["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
+                cod_sin = codigo_equipamento_sinap.lower()
+                df = self.frame_buses.loc[(self.frame_buses["Codigo Sinap"] == cod_sin), ["Id Sinap"]]
+                id = int(df.values[0][0])
             return id
         else:
             print("Frame com nomes não armazenado!")
@@ -466,7 +475,7 @@ class DSSim:
         id_equipamento = int(id)
         if tipo is None:
             # print(self.frame_guids)
-            df_tot = self.frame_guids.loc[(self.frame_guids["Id Sinap"] == id_equipamento)]
+            # df_tot = self.frame_guids.loc[(self.frame_guids["Id Sinap"] == id_equipamento)]
             df = self.frame_guids.loc[(self.frame_guids["Id Sinap"] == id_equipamento), ["Nome Completo"]]
 
             valor = df.values[0][0]
@@ -475,7 +484,7 @@ class DSSim:
             # nome_opendss = self.frame_guids.loc[(self.frame_guids["Id Sinap"] == id_equipamento), ["Nome Completo"]].values[0][0]
         else:  # Caso seja Barra
             # print(self.frame_buses)
-            df_tot = self.frame_buses.loc[(self.frame_guids["Id Sinap"] == id_equipamento)]
+            # df_tot = self.frame_buses.loc[(self.frame_guids["Id Sinap"] == id_equipamento)]
             df = self.frame_buses.loc[(self.frame_guids["Id Sinap"] == id_equipamento), ["Nome Completo"]]
 
             valor = df.values[0][0]
@@ -559,7 +568,6 @@ class DSSim:
         message = "25;" + tamanho_hex + comando + ";"
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
-        # self.s.send(message.encode())
         self.s.send(message.encode())
 
         data = self.s.recv(self.BUFFER_SIZE)
@@ -650,8 +658,8 @@ class DSSim:
             self.send_dss_command(nome_linha + "_2.enabled=False")  # desativa segunda linha
 
             # desativa falta
-            barra_falta = self.send_dss_command("? " + nome_linha + ".bus1") + "_aux"
-            self.send_dss_command("fault." + barra_falta + ".enabled=False")
+            barra_falta = self.send_dss_command(b"? " + nome_linha + b".bus1") + b"_aux"
+            self.send_dss_command(b"fault." + barra_falta + b".enabled=False")
 
             # reativa linha original
             resposta = self.send_dss_command(nome_linha + ".enabled=True")
@@ -676,8 +684,8 @@ class DSSim:
             print("Comunicação com OpenDSS-G estabelecida com sucesso!")
             return True
         else:
-            ctypes.windll.user32.MessageBoxW(0, u"Conexão TCP não estabelecida! Verifique os dados da conexão com o "
-                                                u"servidor!", u"Conexão DSSimPC-v2.0", 0)
+            ctypes.windll.user32.MessageBoxW(0, "Conexão TCP não estabelecida! Verifique os dados da conexão com o "
+                                                "servidor!", "Conexão DSSimPC-v2.0", 0)
             return False
         # self.s.close()   # é necessário abrir e fechar a conexão a todo instante ?
 
@@ -709,7 +717,7 @@ class DSSim:
         self.frame_guids["Id Sinap"] = self.frame_guids.index
         # self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(0)
         # self.frame_guids["Id Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(1)
-        print('self.frame_guids:\n', self.frame_guids)
+        print('self.frame_guids:\n', self.frame_guids.tail(20))
         # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
         # self.frame_guids.to_csv(output_path)
         self.frame_guids.drop("Completo", axis=1, inplace=True)
@@ -743,8 +751,17 @@ class DSSim:
         atualização do fluxo de potência.
         """
 
-        tempo_atual_sec = float(self.get_simulation_time('s'))
+        # tempo_atual_sec = float(self.get_simulation_time('s'))
+        # tempo_atual = str(datetime.timedelta(seconds=tempo_atual_sec))  # datetime
+        # self.current_time[0] = float(tempo_atual.split(":")[0])
+        # self.current_time[1] = float(tempo_atual.split(":")[1])
+        # self.current_time[2] = float(tempo_atual.split(":")[2])
+        tempo_atual_sec = self.get_simulation_time('s')  #> float
+
+        #! timedelta espera int
         tempo_atual = str(datetime.timedelta(seconds=tempo_atual_sec))  # datetime
+
+        #! current_time é uma lista de int
         self.current_time[0] = float(tempo_atual.split(":")[0])
         self.current_time[1] = float(tempo_atual.split(":")[1])
         self.current_time[2] = float(tempo_atual.split(":")[2])
@@ -754,13 +771,13 @@ class DSSim:
         # print("Tempo Atual: " + tempo_atual + "       Tempo Especificado: " + hora + ":" + minuto + ":" + segundo)
 
         if self.time_step is None and tempo_atual_sec != specified_time:  # Na primeira simulação de todas
-            # print(u"Simular - Fluxo Inicial")
+            # print("Simular - Fluxo Inicial")
             return True
         elif self.time_step is not None and (tempo_atual_sec - self.time_step) != specified_time:
-            # print(u"Simular - Fluxo ao longo do processo")
+            # print("Simular - Fluxo ao longo do processo")
             return True
         else:
-            # print(u"Não Simular!")
+            # print("Não Simular!")
             return False
 
     def solve_time(self, hora, minuto, segundo):
@@ -793,7 +810,8 @@ class DSSim:
             else:
                 # Checar se corresponde a uma nova simulação. Isto é, se o tempo especificado é menor que o atual.
                 tempo_seg = float(hora) * 3600.0 + float(minuto) * 60.0 + float(segundo)
-                tempo_atual_sec = float(self.get_simulation_time('s'))
+                # tempo_atual_sec = float(self.get_simulation_time('s'))
+                tempo_atual_sec = self.get_simulation_time('s')
                 if tempo_seg < (tempo_atual_sec - self.time_step):
                     self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
                     self.send_dss_command("set sec=" + str(float(minuto) * 60.0 + float(segundo)))

@@ -1072,7 +1072,7 @@ def reconstroi_msg(data):
             if i == 7:
                 mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[7:11])) + ';'
             elif i == 11:
-                mensagem = mensagem + str(monta_byte_to_signed_int(str(ord(data[i])))) + ';'
+                mensagem = mensagem + str(aux.monta_byte_to_signed_int(str(ord(data[i])))) + ';'
             else:
                 mensagem = mensagem + str(ord(data[i])) + ";"
 
@@ -1228,7 +1228,7 @@ try:
         c.close()
 
     while True:
-        print('while ', i)
+        # print('while ', i)
         c, addr = s.accept()
         print('Conexão estabelecida com', addr)
 
