@@ -7,9 +7,9 @@
 #*.pch
 
 # Ignora os arquivos dentro das pastas Win32
-#Win32/  
+#Win32/
 
-# Ignora os arquivos dentro da pasta build 
+# Ignora os arquivos dentro da pasta build
 #build/
 
 
@@ -37,3 +37,5 @@ ARQUIVOS_RODAR_E_MC_REV2.7z
 .idea/
 **.pyc
 venv/
+01_testeMC(2).Dsp
+CircuitoTesteMC(2).dss
