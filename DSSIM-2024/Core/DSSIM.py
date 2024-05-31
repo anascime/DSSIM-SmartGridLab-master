@@ -11,6 +11,7 @@ no DSSim são necessárias.
 
 __author__ = 'CelsoRocha' and 'Paulo Radatz'
 
+from decimal import ROUND_UP
 import socket
 # import pandas as pd
 import ctypes
@@ -202,22 +203,36 @@ class DSSim:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
 
         tamanho = int(data[:8], 16) + 8
-        lista = data[8:tamanho]
+        lista = data[8:tamanho].decode()
         # print(lista)
         lista = lista[:-1].split()  # deleta última linha, separa as duas linhas restantes e separa por tabulação
-        print(lista)
-        if switch_name in lista:
-            index = float(lista.index(switch_name))
-            x = int(index - len(lista)/2)
+        lista_2 = []
+        for i in lista:
+            if i != "0" and i != "1":
+                i = i.split(".", 1)[1]
+            lista_2.append(i)
 
-            return lista[x]
+
+
+        # lista = [i.split(".", 1) for i in lista]
+        print(lista)
+        print(lista_2)
+        # print(str(lista))
+        print(f"reclose.{switch_name}")
+
+        if switch_name in lista_2:
+            index = float(lista_2.index(switch_name))
+            x = int(index - 1)
+            # x = int(index - len(lista_2)/2)
+
+            return lista_2[x]
         else:
             return None
 
     def get_switch_lock(self, switch_control_name):
         """Método que recebe o nome de um switchcontrol e verifica se ele está travado ou não."""
 
-        lock = self.send_dss_command("? swtcontrol." + switch_control_name + ".lock") # Yes or No
+        lock = self.send_dss_command("? swtcontrol." + switch_control_name + ".lock").decode() # Yes or No
         if lock == "No":
             return 0
         elif lock == "Yes":
@@ -226,7 +241,8 @@ class DSSim:
     def get_total_powers(self, element_name, terminal):
         """Executa comandos no ODSS e retorna 4 floats
 
-        Método que recebe o nome de um element no OpenDSS e retorna a potência ativa e reativa total do elemento
+        Método que recebe o nome de um element no OpenDSS e retorna a potência ativa e
+        reativa total do elemento
         """
         # Se o elemento possuir n fases, a potência total será P1+P2+...+Pn. O mesmo vale para Q.
         # terminal pode ser: 1 , 2 ou None. Se None, o resultado é uma tupla com (P1,Q1,P2,Q2)
@@ -241,17 +257,18 @@ class DSSim:
         classe_elemento = element_name.split(".")[0]
 
         if classe_elemento.lower() == ("load" or "capacitor" or "reactor"):
-            n_phases = len(powers)/2
+            n_phases = len(powers) / 2
             terminal = 1  # força leitura da potência do único terminal que tem
 
             print('len(powers): ', len(powers))
             print("n_phases = len(powers) / 2")
             print(f'n_phases = {n_phases}')
         else:
-            n_phases = len(powers) / 4
+            # n_phases = len(powers) / 4  #?????
+            n_phases = len(powers) / 2
 
             print('len(powers): ', len(powers))
-            print("n_phases = len(powers) / 4")
+            print("n_phases = len(powers) / 2")
             print(f'n_phases = {n_phases}')
 
         p_total_1 = 0
@@ -259,13 +276,13 @@ class DSSim:
         p_total_2 = 0
         q_total_2 = 0
 
-        for i in range(n_phases):  #? o que fazer com valor quebrado de n_phases?
+        for i in range(round(n_phases)):  #? o que fazer com valor quebrado de n_phases?
             p_total_1 = powers[2 * i] + p_total_1
             q_total_1 = powers[2 * i + 1] + q_total_1
 
-            if classe_elemento.lower() != ("load" or "capacitor" or "reactor"):
-                p_total_2 = powers[2 * i + n_phases * 2] + p_total_2
-                q_total_2 = powers[2 * i + 1 + n_phases * 2] + q_total_2
+            # if classe_elemento.lower() != ("load" or "capacitor" or "reactor"):
+            #     p_total_2 = powers[int(2 * i + n_phases * 2)] + p_total_2
+            #     q_total_2 = powers[int(2 * i + 1 + n_phases * 2)] + q_total_2
 
         if terminal == 1:
             return p_total_1, q_total_1
@@ -291,7 +308,8 @@ class DSSim:
         powers = powers.split(b",")
         powers = [float(x) for x in powers]  # Converte para Float
 
-        n_phases = len(powers)/4
+        # n_phases = len(powers)/4  #?????
+        n_phases = len(powers)/2
 
         if phase > n_phases:
             ctypes.windll.user32.MessageBoxW(0, "O elemento " + '"{}"'.format(element_name) + " possui somente " + str(n_phases) +
