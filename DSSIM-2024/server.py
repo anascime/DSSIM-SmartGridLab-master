@@ -20,7 +20,7 @@ dssim_obj.armazena_path()
 dssim_obj.armazena_nomes_elementos()
 
 def process_data(msg):
-        """Processa mensagens entres MC e DSSim
+        """Processa mensagens entre MC e DSSim e retorna string
 
         Método responsável por processar a mensagem recebida pelo cliente MC,
         chamando a respectiva função na comunicação com o servidor DSSim e
@@ -210,7 +210,7 @@ def process_data(msg):
                         voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                         voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         powers_total = dssim_obj.get_total_powers(nome_opendss, 1)  # salva array com registros
-                        power_phase_a = dssim_obj.get_phase_powers(nome_opendss, 1, 1)  # Cuidado aqui, precisamos verificar as fases disponíveis antes...
+                        power_phase_a = dssim_obj.get_phase_powers(nome_opendss, 1, 1)  #* Cuidado aqui, precisamos verificar as fases disponíveis antes...
                         power_phase_b = dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = dssim_obj.get_phase_powers(nome_opendss, 1, 3)
 

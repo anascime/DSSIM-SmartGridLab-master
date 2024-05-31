@@ -21,7 +21,7 @@ import pandas as pd
 
 with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
     pass
-from Core.Auxiliar import *
+from App.Fontes.Auxiliar import *
 
 
 class DSSim:
@@ -86,10 +86,12 @@ class DSSim:
             return float(data[8:tamanho])
 
     def get_all_nodes_voltages(self, unidade):
-        """ Método que retorna a tensão em todas os nós do circuito """
-        # Opções:
-        #   "pu": retorna uma lista com a magnitude da tensão em todos os nós em pu
-        #   "kV": retorna uma lista com a magnitude e a fase da tensão em todos os nós em kV, no formato retangular
+        """Método que retorna lista de floats (tensão em todos os nós do circuito)
+
+        Opções unidade:
+            "pu": retorna uma lista com a magnitude da tensão em todos os nós em pu
+            "kV": retorna uma lista com a magnitude e a fase da tensão em todos os nós em kV, no formato retangular
+        """
 
         if unidade == 'pu':
             message = "03;"
@@ -114,7 +116,7 @@ class DSSim:
         return lista
 
     def get_last_event(self):
-        """ Método que retorna o último evento realizado no DSSim """
+        """Método que retorna bytes com o último evento realizado no DSSim"""
 
         # Opções conhecidas até o momento:
         #   "Switch": quando o estado de alguma chave é alterado na interface
@@ -135,7 +137,7 @@ class DSSim:
         return data[8:tamanho]
 
     def get_bus_voltages(self, bus_name):
-        """Executa comandos no ODSS e retorna list de tensões
+        """Executa comandos no ODSS e retorna lista de floats (tensões)
 
         Método que recebe o nome de uma barra e retorna as tensões nodais Van, Vbn, Vcn e Vnt
         """
@@ -151,7 +153,7 @@ class DSSim:
         return voltages
 
     def get_elem_voltages(self, element_name, terminal):
-        """Executa comandos no ODSS e retorna list de tensões
+        """Executa comandos no ODSS e retorna lista de floats (tensões)
 
         Método que recebe o nome de um elemento e retorna as tensões nodais nos seus terminais
         """
@@ -170,7 +172,7 @@ class DSSim:
         return voltages
 
     def get_elem_currents(self, element_name):
-        """Executa comandos no ODSS e retorna list das correntes
+        """Executa comandos no ODSS e retorna lista de floats (correntes)
 
         Método que recebe o nome completo de um PDE ou PCE do OpenDSS e
         retorna as correntes que entram em cada um dos seus nós, dos dois terminais
@@ -190,7 +192,7 @@ class DSSim:
         return currents
 
     def get_switch_state(self, switch_name):
-        """Método que recebe o nome de um switch e retorna o seu estado"""
+        """Método que recebe o nome de um switch e retorna int (0 ou 1: estado da chave)"""
 
         message = "19;"
 
