@@ -220,7 +220,6 @@ class DSSim:
         print(lista)
         print(lista_2)
         # print(str(lista))
-        print(f"reclose.{switch_name}")
 
         if switch_name in lista_2:
             index = float(lista_2.index(switch_name))
@@ -388,7 +387,7 @@ class DSSim:
         time.sleep(0.1)
 
         data = self.s.recv(self.BUFFER_SIZE)
-        if self.form is not None:
+        if self.fo,,0rm is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
 
         tamanho = int(data[:8], 16) + 8
@@ -595,7 +594,9 @@ class DSSim:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
         tamanho = int(data[:8], 16) + 8
 
-        return data[8:tamanho]
+        data_r = data[8:tamanho]
+
+        return data_r
 
     def refresh_gui(self, tipo):
         """Método que atualiza a GUI do DSSim"""
