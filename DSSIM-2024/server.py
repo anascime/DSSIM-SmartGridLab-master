@@ -5,21 +5,23 @@ import socket
 import struct
 import datetime
 import threading
+import time
 # import thread
 # import Core.MC as coreMC
-import Core.DSSIM as DSSIM
+# import Core.DSSIM as DSSIM
 import App.Fontes.Auxiliar as aux
 from Tools.test_tools import *
+import Core.DSSIM as DSSIM
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
 BUFFER_SIZE = 8192  # Qual valor utilizar aqui?
 
 
-resp92 = "\x02\x80\x00"
-resp92_enc = resp92.encode('latin')
-resp94 = "\x02\x79\x00"
-resp94_enc = resp94.encode('latin')
+# resp92 = "\x02\x80\x00"
+# resp92_enc = resp92.encode('latin')
+# resp94 = "\x02\x79\x00"
+# resp94_enc = resp94.encode('latin')
 
 
 dssim_obj = DSSIM.DSSim(TCP_IP, TCP_PORT, BUFFER_SIZE, None)    #> teste
@@ -60,8 +62,7 @@ def process_data(msg):
                 tipo_equipamento = msg_dividida[5]
                 print('tipo_equipamento: ', tipo_equipamento)
 
-                # id_equipamento = 6285  #< int númro grande dá problema
-                # id_equipamento = 1  #> int funcionando
+                # id_equipamento = 6285  #< int número grande dá problema
                 id_equipamento = dssim_obj.retorna_id(codigo_equipamento, tipo_equipamento)  # int
                 print('id_equipamento: ', id_equipamento)
 
@@ -218,6 +219,7 @@ def process_data(msg):
                     elif tipo_equipamento == "3":  # Chave
 
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
+                        # currents = dssim_obj.get_elem_currents(nome_opendss, 1)  # salva array com registros
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
                         voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                         voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
@@ -226,86 +228,86 @@ def process_data(msg):
                         power_phase_b = dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = dssim_obj.get_phase_powers(nome_opendss, 1, 3)
 
-                        # va1 = struct.pack('<f', voltages_1[0])[0:4]
-                        # va1_angle = struct.pack('<f', voltages_1[1])[0:4]
-                        # vb1 = struct.pack('<f', voltages_1[2])[0:4]
-                        # vb1_angle = struct.pack('<f', voltages_1[3])[0:4]
-                        # vc1 = struct.pack('<f', voltages_1[4])[0:4]
-                        # vc1_angle = struct.pack('<f', voltages_1[5])[0:4]
-                        # vn1 = struct.pack('<f', voltages_1[6])[0:4]
-                        # vn1_angle = struct.pack('<f', voltages_1[7])[0:4]
+                        va1 = struct.pack('<f', voltages_1[0])[0:4]
+                        va1_angle = struct.pack('<f', voltages_1[1])[0:4]
+                        vb1 = struct.pack('<f', voltages_1[2])[0:4]
+                        vb1_angle = struct.pack('<f', voltages_1[3])[0:4]
+                        vc1 = struct.pack('<f', voltages_1[4])[0:4]
+                        vc1_angle = struct.pack('<f', voltages_1[5])[0:4]
+                        vn1 = struct.pack('<f', voltages_1[6])[0:4]
+                        vn1_angle = struct.pack('<f', voltages_1[7])[0:4]
 
-                        va1 = struct.pack('<f', 0)[0:4]
-                        va1_angle = struct.pack('<f', 0)[0:4]
-                        vb1 = struct.pack('<f', 0)[0:4]
-                        vb1_angle = struct.pack('<f', 0)[0:4]
-                        vc1 = struct.pack('<f', 0)[0:4]
-                        vc1_angle = struct.pack('<f', 0)[0:4]
-                        vn1 = struct.pack('<f', 0)[0:4]
-                        vn1_angle = struct.pack('<f', 0)[0:4]
+                        # va1 = struct.pack('<f', 0)[0:4]
+                        # va1_angle = struct.pack('<f', 0)[0:4]
+                        # vb1 = struct.pack('<f', 0)[0:4]
+                        # vb1_angle = struct.pack('<f', 0)[0:4]
+                        # vc1 = struct.pack('<f', 0)[0:4]
+                        # vc1_angle = struct.pack('<f', 0)[0:4]
+                        # vn1 = struct.pack('<f', 0)[0:4]
+                        # vn1_angle = struct.pack('<f', 0)[0:4]
 
-                        equipamento.append(va1_angle.decode())  # Ângulo Fase - Terminal 1
-                        equipamento.append(va1.decode())  # Módulo Fase A - Terminal 1
-                        equipamento.append(vb1.decode())  # Módulo Fase B - Terminal 1
-                        equipamento.append(vb1_angle.decode())  # Ângulo Fase B - Terminal 1
-                        equipamento.append(vc1.decode())  # Módulo Fase C - Terminal 1
-                        equipamento.append(vc1_angle.decode())  # Ângulo Fase C - Terminal 1
-                        equipamento.append(vn1.decode())  # Módulo Neutro - Terminal 1
-                        equipamento.append(vn1_angle.decode())  # Ângulo Neutro - Terminal 1
+                        equipamento.append(va1.decode('latin-1'))  # Módulo Fase A - Terminal 1
+                        equipamento.append(va1_angle.decode('latin-1'))  # Ângulo Fase - Terminal 1
+                        equipamento.append(vb1.decode('latin-1'))  # Módulo Fase B - Terminal 1
+                        equipamento.append(vb1_angle.decode('latin-1'))  # Ângulo Fase B - Terminal 1
+                        equipamento.append(vc1.decode('latin-1'))  # Módulo Fase C - Terminal 1
+                        equipamento.append(vc1_angle.decode('latin-1'))  # Ângulo Fase C - Terminal 1
+                        equipamento.append(vn1.decode('latin-1'))  # Módulo Neutro - Terminal 1
+                        equipamento.append(vn1_angle.decode('latin-1'))  # Ângulo Neutro - Terminal 1
 
-                        # va2 = voltages_2[0]
-                        # va2_angle = voltages_2[1]
-                        # vb2 = voltages_2[2]
-                        # vb2_angle = voltages_2[3]
-                        # vc2 = voltages_2[4]
-                        # vc2_angle = voltages_2[5]
-                        # vn2 = voltages_2[6]
-                        # vn2_angle = voltages_2[7]
+                        va2 = voltages_2[0]
+                        va2_angle = voltages_2[1]
+                        vb2 = voltages_2[2]
+                        vb2_angle = voltages_2[3]
+                        vc2 = voltages_2[4]
+                        vc2_angle = voltages_2[5]
+                        vn2 = voltages_2[6]
+                        vn2_angle = voltages_2[7]
 
-                        va2 = float(0)
-                        va2_angle = float(0)
-                        vb2 = float(0)
-                        vb2_angle = float(0)
-                        vc2 = float(0)
-                        vc2_angle = float(0)
-                        vn2 = float(0)
-                        vn2_angle = float(0)
+                        # va2 = float(0)
+                        # va2_angle = float(0)
+                        # vb2 = float(0)
+                        # vb2_angle = float(0)
+                        # vc2 = float(0)
+                        # vc2_angle = float(0)
+                        # vn2 = float(0)
+                        # vn2_angle = float(0)
 
-                        equipamento.append((struct.pack('<f', va2)[0:4]).decode())  # Módulo Fase A - Terminal 2
-                        equipamento.append((struct.pack('<f', va2_angle)[0:4]).decode())  # Ângulo Fase - Terminal 2
-                        equipamento.append((struct.pack('<f', vb2)[0:4]).decode())  # Módulo Fase B - Terminal 2
-                        equipamento.append((struct.pack('<f', vb2_angle)[0:4]).decode())  # Ângulo Fase B - Terminal 2
-                        equipamento.append((struct.pack('<f', vc2)[0:4]).decode())  # Módulo Fase C - Terminal 2
-                        equipamento.append((struct.pack('<f', vc2_angle)[0:4]).decode())  # Ângulo Fase C - Terminal 2
-                        equipamento.append((struct.pack('<f', vn2)[0:4]).decode())  # Módulo Neutro - Terminal 2
-                        equipamento.append((struct.pack('<f', vn2_angle)[0:4]).decode())  # Ângulo Neutro - Terminal 2
+                        equipamento.append((struct.pack('<f', va2)[0:4]).decode('latin-1'))  # Módulo Fase A - Terminal 2
+                        equipamento.append((struct.pack('<f', va2_angle)[0:4]).decode('latin-1'))  # Ângulo Fase - Terminal 2
+                        equipamento.append((struct.pack('<f', vb2)[0:4]).decode('latin-1'))  # Módulo Fase B - Terminal 2
+                        equipamento.append((struct.pack('<f', vb2_angle)[0:4]).decode('latin-1'))  # Ângulo Fase B - Terminal 2
+                        equipamento.append((struct.pack('<f', vc2)[0:4]).decode('latin-1'))  # Módulo Fase C - Terminal 2
+                        equipamento.append((struct.pack('<f', vc2_angle)[0:4]).decode('latin-1'))  # Ângulo Fase C - Terminal 2
+                        equipamento.append((struct.pack('<f', vn2)[0:4]).decode('latin-1'))  # Módulo Neutro - Terminal 2
+                        equipamento.append((struct.pack('<f', vn2_angle)[0:4]).decode('latin-1'))  # Ângulo Neutro - Terminal 2
 
-                        ia = float(0)
-                        ia_angle = float(0)
-                        ib = float(0)
-                        ib_angle = float(0)
-                        ic = float(0)
-                        ic_angle = float(0)
-                        in_ = float(0)
-                        in_angle = float(0)
+                        # ia = float(35.4)
+                        # ia_angle = float(120)
+                        # ib = float(41.5)
+                        # ib_angle = float(0)
+                        # ic = float(38.7)
+                        # ic_angle = float(-120)
+                        # in_ = float(0)
+                        # in_angle = float(0)
 
-                        # ia = currents[0]
-                        # ia_angle = currents[1]
-                        # ib = currents[2]
-                        # ib_angle = currents[3]
-                        # ic = currents[4]
-                        # ic_angle = currents[5]
-                        # in_ = currents[6]  # in_
-                        # in_angle = currents[7]
+                        ia = currents[0]
+                        ia_angle = currents[1]
+                        ib = currents[2]
+                        ib_angle = currents[3]
+                        ic = currents[4]
+                        ic_angle = currents[5]
+                        in_ = currents[6]  # in_
+                        in_angle = currents[7]
 
-                        equipamento.append((struct.pack('<f', ia)[0:4]).decode())  # Módulo Fase A
-                        equipamento.append((struct.pack('<f', ia_angle)[0:4]).decode())  # Ângulo Fase
-                        equipamento.append((struct.pack('<f', ib)[0:4]).decode())  # Módulo Fase B
-                        equipamento.append((struct.pack('<f', ib_angle)[0:4]).decode())  # Ângulo Fase B
-                        equipamento.append((struct.pack('<f', ic)[0:4]).decode())  # Módulo Fase C
-                        equipamento.append((struct.pack('<f', ic_angle)[0:4]).decode())  # Ângulo Fase C
-                        equipamento.append((struct.pack('<f', in_)[0:4]).decode())  # Módulo Neutro
-                        equipamento.append((struct.pack('<f', in_angle)[0:4]).decode())  # Ângulo Neutro
+                        equipamento.append((struct.pack('<f', ia)[0:4]).decode('latin-1'))  # Módulo Fase A
+                        equipamento.append((struct.pack('<f', ia_angle)[0:4]).decode('latin-1'))  # Ângulo Fase
+                        equipamento.append((struct.pack('<f', ib)[0:4]).decode('latin-1'))  # Módulo Fase B
+                        equipamento.append((struct.pack('<f', ib_angle)[0:4]).decode('latin-1'))  # Ângulo Fase B
+                        equipamento.append((struct.pack('<f', ic)[0:4]).decode('latin-1'))  # Módulo Fase C
+                        equipamento.append((struct.pack('<f', ic_angle)[0:4]).decode('latin-1'))  # Ângulo Fase C
+                        equipamento.append((struct.pack('<f', in_)[0:4]).decode('latin-1'))  # Módulo Neutro
+                        equipamento.append((struct.pack('<f', in_angle)[0:4]).decode('latin-1'))  # Ângulo Neutro
 
                         switch_state = chr(int(dssim_obj.get_switch_state(nome_opendss.split(".")[1])))   # switch state não tá funcionando para a última chave
                         equipamento.append(switch_state)
@@ -313,11 +315,11 @@ def process_data(msg):
                         equipamento.append(cbr)
                         cbtl = chr(int(0))
                         equipamento.append(cbtl)
-                        lockout = chr(int(dssim_obj.get_switch_lock(nome_opendss.split(".")[1]))) # checaaaar
+                        lockout = chr(int(dssim_obj.get_switch_lock(nome_opendss.split(".")[1]))) #! checaaaar
                         equipamento.append(lockout)
 
                         # Em qual terminal?
-                        p_3f = float(0) # powers_total[0]/1000.0  # converter de kW para MW
+                        p_3f = float(0) # powers_total[0]/1000.0  # converter                       de kW para MW
                         q_3f = float(0) # powers_total[1]/1000.0
                         p_a = float(0) # power_phase_a[0]/1000.0
                         q_a = float(0) # power_phase_a[1]/1000.0
@@ -354,25 +356,25 @@ def process_data(msg):
                         voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
 
-                        va1 = voltages_1[0]
-                        va1_angle = voltages_1[1]
-                        vb1 = voltages_1[2]
-                        vb1_angle = voltages_1[3]
-                        vc1 = voltages_1[4]
-                        vc1_angle = voltages_1[5]
-                        # vn1 = voltages_1[6]
-                        # vn1_angle = voltages_1[7]
+                        va1 = struct.pack('<f', voltages_1[0])[0:4]
+                        va1_angle = struct.pack('<f', voltages_1[1])[0:4]
+                        vb1 = struct.pack('<f', voltages_1[2])[0:4]
+                        vb1_angle = struct.pack('<f', voltages_1[3])[0:4]
+                        vc1 = struct.pack('<f', voltages_1[4])[0:4]
+                        vc1_angle = struct.pack('<f', voltages_1[5])[0:4]
+                        # vn1 = struct.pack('<f', voltages_1[6])[0:4]
+                        # vn1_angle = struct.pack('<f', voltages_1[7])[0:4]
                         vn1 = 0
                         vn1_angle = 0
 
-                        equipamento.append(struct.pack('<f', va1)[0:4])  # Módulo Fase A - Terminal 1
-                        equipamento.append(struct.pack('<f', va1_angle)[0:4])  # Ângulo Fase - Terminal 1
-                        equipamento.append(struct.pack('<f', vb1)[0:4])  # Módulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vb1_angle)[0:4])  # Ângulo Fase B - Terminal 1
-                        equipamento.append(struct.pack('<f', vc1)[0:4])  # Módulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vc1_angle)[0:4])  # Ângulo Fase C - Terminal 1
-                        equipamento.append(struct.pack('<f', vn1)[0:4])  # Módulo Neutro - Terminal 1
-                        equipamento.append(struct.pack('<f', vn1_angle)[0:4])  # Ângulo Neutro - Terminal 1
+                        equipamento.append(va1.decode('latin-1'))  # Módulo Fase A - Terminal 1
+                        equipamento.append(va1_angle.decode('latin-1'))  # Ângulo Fase - Terminal 1
+                        equipamento.append(vb1.decode('latin-1'))  # Módulo Fase B - Terminal 1
+                        equipamento.append(vb1_angle.decode('latin-1'))  # Ângulo Fase B - Terminal 1
+                        equipamento.append(vc1.decode('latin-1'))  # Módulo Fase C - Terminal 1
+                        equipamento.append(vc1_angle.decode('latin-1'))  # Ângulo Fase C - Terminal 1
+                        equipamento.append(vn1)  # Módulo Neutro - Terminal 1
+                        equipamento.append(vn1_angle)  # Ângulo Neutro - Terminal 1
 
                         va2 = voltages_2[0]
                         va2_angle = voltages_2[1]
@@ -642,7 +644,7 @@ def process_data(msg):
             elif funcao == "3":  # Alteração de Estado de Chave
                 print('funcao: ', funcao)
 
-                return
+                # return
 
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
@@ -651,12 +653,15 @@ def process_data(msg):
                 id_equipamento = msg_dividida[6]
                 comando = int(msg_dividida[7])
 
-                nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)[5:]  # retira o "Line." do nome Completo do elemento Line que é um switch
-                estado_atual = int(dssim_obj.get_switch_state(nome_opendss))
+                nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)  #> deixa o nome completo "swtcontrol."
+                # nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)[5:]  #* retira o "Line." do nome Completo do elemento Line que é um switch
+                estado_atual = int(dssim_obj.get_switch_state(nome_opendss.split(".")[1])) # type: ignore
 
                 if comando != estado_atual:  # se o novo estado é diferente do atual
                     resposta = dssim_obj.set_switch_state(nome_opendss, comando)
+
                     if resposta == 'OK':  # Significa que foi executada com sucesso pelo OpenDSS-G. Verificar o que ocorre se a chave já estivesse aberta
+
                         msg_retornada = func100acknowledgment(int(funcao), 1)
 
                         # dssim_obj.update_flow_needed = True  # força solução do fluxo novamente porque houve mudança no estado da chave
@@ -675,7 +680,7 @@ def process_data(msg):
 
                 # Mensagem Display
                 msg = str(ord(msg_retornada[0])) + ";" + str(ord(msg_retornada[1])) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";"
-                form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
+                # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
 
                 return "".join(str(x) for x in msg_retornada)
 

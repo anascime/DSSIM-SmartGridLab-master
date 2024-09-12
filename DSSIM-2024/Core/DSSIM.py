@@ -171,12 +171,19 @@ class DSSim:
 
         return voltages
 
+
     def get_elem_currents(self, element_name):
         """Executa comandos no ODSS e retorna lista de floats (correntes)
 
         Método que recebe o nome completo de um PDE ou PCE do OpenDSS e
         retorna as correntes que entram em cada um dos seus nós, dos dois terminais
         """
+
+        tipoequip = element_name.split(".")[0]
+        if tipoequip == "SwtControl":
+             element_name = (self.send_dss_command("? " + element_name + ".SwitchedObj")).decode()
+        # element_name = "Line.Linha_12"
+        # element_name = "SwtControl.130DJCSO022"
 
         self.send_dss_command("select " + element_name)
         currents = self.send_dss_command("currents")
@@ -377,11 +384,12 @@ class DSSim:
         # identifica o tamanho da mensagem
         tamanho = len(nome) + 2  #: + 1 pelo sinal de igualdade e + 1 pelo status
         tamanho_hex = "%04x" % tamanho
-
         message = "18;" + tamanho_hex + nome + "=" + str(status) + ";"
 
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
+
+        msgenv = message.encode()
         self.s.send(message.encode())
 
         time.sleep(0.1)
@@ -391,7 +399,7 @@ class DSSim:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
 
         tamanho = int(data[:8], 16) + 8
-        return data[8:tamanho]
+        return (data[8:tamanho]).decode()
 
     def set_new_bus_fault(self, nome_barra, tipo, resistencia):
         """Método que aplica uma falta em uma dada barra com uma dada resistência de falta.
@@ -470,7 +478,7 @@ class DSSim:
     def retorna_id(self, codigo_equipamento_sinap, tipo_equipamento):
         """Método que recebe o código de um equipamento do Sinap e retorna o seu ID"""
         if self.frame_guids is not None:
-            if tipo_equipamento is not "1":  #> não é Barra
+            if tipo_equipamento != "1":  #> não é Barra
                 # print(self.frame_guids.tail(31))
                 # id = int(self.frame_guids.loc[(self.frame_guids["Codigo Sinap"] == codigo_equipamento_sinap.lower()), ["Id Sinap"]].values[0][0])
                 cod_sin = codigo_equipamento_sinap.lower()
@@ -618,12 +626,13 @@ class DSSim:
         self.s.send(message.encode())
         time.sleep(0.1)
 
-        data = self.s.recv(self.BUFFER_SIZE)
-        if self.form is not None:
-            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
-        tamanho = int(data[:8], 16) + 8
+        # data = self.s.recv(self.BUFFER_SIZE)
+        # if self.form is not None:
+        #     self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
+        # tamanho = int(data[:8], 16) + 8
 
-        return data[8:tamanho]
+        return
+        # return data[8:tamanho]
 
     def step_in(self):
         """Método que avança um passo de tempo na simulação do DSSim"""
@@ -738,7 +747,7 @@ class DSSim:
         self.frame_guids["Id Sinap"] = self.frame_guids.index
         # self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(0)
         # self.frame_guids["Id Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(1)
-        print('self.frame_guids:\n', self.frame_guids.tail(20))
+        print('self.frame_guids:\n', self.frame_guids.to_markdown())
         # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
         # self.frame_guids.to_csv(output_path)
         self.frame_guids.drop("Completo", axis=1, inplace=True)
@@ -778,6 +787,10 @@ class DSSim:
         # self.current_time[1] = float(tempo_atual.split(":")[1])
         # self.current_time[2] = float(tempo_atual.split(":")[2])
         tempo_atual_sec = self.get_simulation_time('s')  #> float
+
+        # if tempo_atual_sec < 0:
+
+        #     tempo_atual_sec = 66600
 
         #! timedelta espera int
         tempo_atual = str(datetime.timedelta(seconds=tempo_atual_sec))  # datetime
