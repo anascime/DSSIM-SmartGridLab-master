@@ -616,7 +616,7 @@ class DSSim:
     def connect(self):
 
         if self.s.connect_ex((self.TCP_IP, self.TCP_PORT)) == 0:  # Conecta com o servidor
-            print(u"Comunicação Estabelecida com sucesso!")
+            print("Comunicação Estabelecida com sucesso!")
             return True
         else:
             ctypes.windll.user32.MessageBoxW(0, u"Conexão TCP não estabelecida! Verifique os dados da conexão com o "

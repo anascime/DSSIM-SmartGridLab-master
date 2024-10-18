@@ -15,13 +15,13 @@ import ctypes
 import time
 import struct
 import datetime
-from Auxiliar import *
+from App.Fontes.Auxiliar import *
 
 
 class MC:
 
     def __init__(self, form, TCP_PORT, TCP_HOST = '', dssim_obj = None):
-        """ Cria um novo objeto MC """
+        """Cria um novo objeto MC"""
 
         self.TCP_HOST = TCP_HOST  # O que significa o HOST exatamente? Uma string vazia significa que o servidor
         # pode escutar conexões oriundas de outros computadores na rede também. "127.0.0.1" significa que
