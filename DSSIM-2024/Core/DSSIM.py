@@ -182,8 +182,7 @@ class DSSim:
         tipoequip = element_name.split(".")[0]
         if tipoequip == "SwtControl":
              element_name = (self.send_dss_command("? " + element_name + ".SwitchedObj")).decode()
-        # element_name = "Line.Linha_12"
-        # element_name = "SwtControl.130DJCSO022"
+
 
         self.send_dss_command("select " + element_name)
         currents = self.send_dss_command("currents")
@@ -456,7 +455,15 @@ class DSSim:
         self.send_dss_command(nome_capacitor + ".kvar=" + str(kvar))
 
     def set_capacitor_state(self, nome_capacitor, state):
+
+        states = self.send_dss_command("? Capacitor.Cap.states")
+        print("antes: ", states)
+
         self.send_dss_command(nome_capacitor + ".states=" + str(state))
+        # self.send_dss_command("CapControl.cap.states=" + str(state))
+
+        states = self.send_dss_command("? Capacitor.Cap.states")
+        print(f"depois: {states}")
 
     def set_load_powers(self, nome_carga, p, q):
 
@@ -595,6 +602,7 @@ class DSSim:
         message = "25;" + tamanho_hex + comando + ";"
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, message + "\n\n")
+
         self.s.send(message.encode())
 
         data = self.s.recv(self.BUFFER_SIZE)
