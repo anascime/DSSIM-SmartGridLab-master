@@ -1,4 +1,4 @@
-###  # -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 
 import sys
 import socket
@@ -372,27 +372,48 @@ def process_data(msg):
                         equipamento.append(vn2.decode('latin-1'))  # Módulo Neutro - Terminal 1
                         equipamento.append(vn2_angle.decode('latin-1'))  # Ângulo Neutro - Terminal 1
 
-                        ia1 = struct.pack('<f', currents[0])[0:4]
-                        ia1_angle = struct.pack('<f', currents[1])[0:4]
-                        ib1 = struct.pack('<f', currents[2])[0:4]
-                        ib1_angle = struct.pack('<f', currents[3])[0:4]
-                        ic1 = struct.pack('<f', currents[4])[0:4]
-                        ic1_angle = struct.pack('<f', currents[5])[0:4]
-                        in1_ = struct.pack('<f', 0)[0:4]
-                        in1_angle = struct.pack('<f', 0)[0:4]
-                        # in1_ = struct.pack('<f', currents[6])[0:4]
-                        # in1_angle = struct.pack('<f', currents[7])[0:4]
+                        if len(currents) == 9:
+                            ia1 = struct.pack('<f', currents[0])[0:4]
+                            ia1_angle = struct.pack('<f', currents[1])[0:4]
+                            ib1 = struct.pack('<f', 0)[0:4]
+                            ib1_angle = struct.pack('<f', 0)[0:4]
+                            ic1 = struct.pack('<f', 0)[0:4]
+                            ic1_angle = struct.pack('<f', 0)[0:4]
+                            in1_ = struct.pack('<f', 0)[0:4]
+                            in1_angle = struct.pack('<f', 0)[0:4]
+                            # in1_ = struct.pack('<f', currents[6])[0:4]
+                            # in1_angle = struct.pack('<f', currents[7])[0:4]
 
-                        ia2 = struct.pack('<f', currents[8])[0:4]
-                        ia2_angle = struct.pack('<f', currents[9])[0:4]
-                        ib2 = struct.pack('<f', currents[10])[0:4]
-                        ib2_angle = struct.pack('<f', currents[11])[0:4]
-                        ic2 = struct.pack('<f', currents[12])[0:4]
-                        ic2_angle = struct.pack('<f', currents[13])[0:4]
-                        in2_ = struct.pack('<f', 0)[0:4]
-                        in2_angle = struct.pack('<f', 0)[0:4]
-                        # in2_ = struct.pack('<f', currents[14])[0:4]
-                        # in2_angle = struct.pack('<f', currents[15])[0:4]
+                            ia2 = struct.pack('<f', currents[0])[0:4]
+                            ia2_angle = struct.pack('<f', currents[1])[0:4]
+                            ib2 = struct.pack('<f', 0)[0:4]
+                            ib2_angle = struct.pack('<f', 0)[0:4]
+                            ic2 = struct.pack('<f', 0)[0:4]
+                            ic2_angle = struct.pack('<f', 0)[0:4]
+                            in2_ = struct.pack('<f', 0)[0:4]
+                            in2_angle = struct.pack('<f', 0)[0:4]
+                        else:
+                            ia1 = struct.pack('<f', currents[0])[0:4]
+                            ia1_angle = struct.pack('<f', currents[1])[0:4]
+                            ib1 = struct.pack('<f', currents[2])[0:4]
+                            ib1_angle = struct.pack('<f', currents[3])[0:4]
+                            ic1 = struct.pack('<f', currents[4])[0:4]
+                            ic1_angle = struct.pack('<f', currents[5])[0:4]
+                            in1_ = struct.pack('<f', 0)[0:4]
+                            in1_angle = struct.pack('<f', 0)[0:4]
+                            # in1_ = struct.pack('<f', currents[6])[0:4]
+                            # in1_angle = struct.pack('<f', currents[7])[0:4]
+
+                            ia2 = struct.pack('<f', currents[8])[0:4]
+                            ia2_angle = struct.pack('<f', currents[9])[0:4]
+                            ib2 = struct.pack('<f', currents[10])[0:4]
+                            ib2_angle = struct.pack('<f', currents[11])[0:4]
+                            ic2 = struct.pack('<f', currents[12])[0:4]
+                            ic2_angle = struct.pack('<f', currents[13])[0:4]
+                            in2_ = struct.pack('<f', 0)[0:4]
+                            in2_angle = struct.pack('<f', 0)[0:4]
+                            # in2_ = struct.pack('<f', currents[14])[0:4]
+                            # in2_angle = struct.pack('<f', currents[15])[0:4]
 
                         equipamento.append(ia1.decode('latin-1'))  # Módulo Fase A - Terminal 1
                         equipamento.append(ia1_angle.decode('latin-1'))  # Ângulo Fase - Terminal 1
@@ -719,30 +740,38 @@ def process_data(msg):
 
             #     return "".join(str(x) for x in msg_retornada)
 
-            # elif funcao == "6":  # Alteração de Tap de Transformador
+            elif funcao == "6" or funcao == "7":  # Alteração de Tap de Transformador
 
-            #     qtde_bytes_rcv = msg_dividida[1]
-            #     hora = msg_dividida[2]
-            #     minuto = msg_dividida[3]
-            #     segundo = msg_dividida[4]
+                qtde_bytes_rcv = msg_dividida[1]
+                hora = msg_dividida[2]
+                minuto = msg_dividida[3]
+                segundo = msg_dividida[4]
 
-            #     tipo_equipamento = msg_dividida[5]
-            #     id_equipamento = msg_dividida[6]
-            #     variacao_tap = int(msg_dividida[7])
+                tipo_equipamento = msg_dividida[5]
+                id_equipamento = msg_dividida[6]
+                tap = int(msg_dividida[7])
 
-            #     nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
-            #     resposta = dssim_obj.varia_tap(nome_opendss, variacao_tap)
+                # if tap > 1:
+                #     variacao_tap = 1
+                # else:
+                #     variacao_tap = tap
 
-            #     if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
-            #         msg_retornada = func100acknowledgment(int(funcao), 1)
-            #     else:
-            #         msg_retornada = func100acknowledgment(int(funcao), 0)
+                print('tapMC: ', tap)
 
-            #     # Mensagem Display
-            #     msg = str(ord(msg_retornada[0])) + ";" + str(ord(msg_retornada[1])) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";"
-            #     form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
 
-            #     return "".join(str(x) for x in msg_retornada)
+                nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
+                resposta = dssim_obj.varia_tap(nome_opendss, tap)
+
+                if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                    msg_retornada = func100acknowledgment(int(funcao), 1)
+                else:
+                    msg_retornada = func100acknowledgment(int(funcao), 0)
+
+                # Mensagem Display
+                msg = str(ord(msg_retornada[0])) + ";" + str(ord(msg_retornada[1])) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";"
+                # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
+
+                return "".join(str(x) for x in msg_retornada)
 
             # elif funcao == "8":  # Alteração no valor de Reativo em BC
 
@@ -873,9 +902,9 @@ def decodifica_mensagem(conn, data):
 
                 #~ prints de MONITORAMENTO: tamanho da mensagem
                 # print('\nlen_data: ', data_len)
-                # print('data_encode:\t\t', data.encode())
-                # print('resposta_encode:\t', resposta.encode())
-                # print(f'len_resposta: {resposta_len}\n')
+                print('data_encode:\t\t', data.encode())
+                print('resposta_encode:\t', resposta.encode())
+                print(f'len_resposta: {resposta_len}\n')
 
                 # conn.sendall(resposta)
                 conn.send(resposta.encode('latin'))
@@ -896,10 +925,10 @@ def decodifica_mensagem(conn, data):
 
         else:  # Mensagem recebida está incompleta
             decodificar_dados_recebidos = False
-
+        print(u'\u2500' * 10, end='\n\n')
 
 def reconstroi_msg(data):
-    """ Função que reconstrói uma mensagem recebida do Módulo Central"""
+    """Função que reconstrói uma mensagem recebida do Módulo Central"""
 
     funcao = int(ord(data[0]))
     mensagem = ""
@@ -1084,27 +1113,27 @@ def reconstroi_msg(data):
         return str(mensagem)
 
     elif funcao == 6:  # Alteração no Tap de Transformador
+        """Essa função já vem com a quantidade de bytes fechada.
 
-        # Essa função já vem com a quantidade de bytes fechada.
+            Essa mensagem possui sempre 7 bytes iniciais
+            Byte 1: Função
+            Byte 2: Quantidade de Bytes - byte 1
+            Byte 3: Quantidade de Bytes - byte 2 = 0
+            Byte 4: Hora
+            Byte 5: Minuto
+            Byte 6: Segundo
 
-        # Essa mensagem possui sempre 7 bytes iniciais
-        # Byte 1: Função
-        # Byte 2: Quantidade de Bytes - byte 1
-        # Byte 3: Quantidade de Bytes - byte 2 = 0
-        # Byte 4: Hora
-        # Byte 5: Minuto
-        # Byte 6: Segundo
+            Mais 5 Bytes que descrevem o transformador selecionado:
 
-        # Mais 5 Bytes que descrevem o transformador selecionado:
+            Byte 7: Número do Tipo do Equipamento
+            Byte 8: Id do Equipamento (Byte 1) - Inteiro
+            Byte 9: Id do Equipamento (Byte 2) - Inteiro
+            Byte 10: Id do Equipamento (Byte 3) - Inteiro
+            Byte 11: Id do Equipamento (Byte 4) - Inteiro
 
-        # Byte 7: Número do Tipo do Equipamento
-        # Byte 8: Id do Equipamento (Byte 1) - Inteiro
-        # Byte 9: Id do Equipamento (Byte 2) - Inteiro
-        # Byte 10: Id do Equipamento (Byte 3) - Inteiro
-        # Byte 11: Id do Equipamento (Byte 4) - Inteiro
-
-        # E 1 Byte com a variação do tap
-        # Byte 12: Variação (Byte) - Inteiro sem sinal. Precisamos converter de NotSignedToSigned
+            E 1 Byte com a variação do tap
+            Byte 12: Variação (Byte) - Inteiro sem sinal. Precisamos converter de NotSignedToSigned
+        """
 
         for i in range(len(data)):
             if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # não adicionar espaços em branco que vem na mensagem...
@@ -1120,7 +1149,40 @@ def reconstroi_msg(data):
         return str(mensagem)
 
     elif funcao == 7:  # Alteração no Tap de Regulador de Tensão
-        return "funcao 7 ainda não implementada"
+        """Essa função já vem com a quantidade de bytes fechada.
+
+            Essa mensagem possui sempre 7 bytes iniciais
+            Byte 1: Função
+            Byte 2: Quantidade de Bytes - byte 1
+            Byte 3: Quantidade de Bytes - byte 2 = 0
+            Byte 4: Hora
+            Byte 5: Minuto
+            Byte 6: Segundo
+
+            Mais 5 Bytes que descrevem o transformador selecionado:
+
+            Byte 7: Número do Tipo do Equipamento
+            Byte 8: Id do Equipamento (Byte 1) - Inteiro
+            Byte 9: Id do Equipamento (Byte 2) - Inteiro
+            Byte 10: Id do Equipamento (Byte 3) - Inteiro
+            Byte 11: Id do Equipamento (Byte 4) - Inteiro
+
+            E 1 Byte com a variação do tap
+            Byte 12: Variação (Byte) - Inteiro sem sinal. Precisamos converter de NotSignedToSigned
+        """
+
+        for i in range(len(data)):
+            if (ord(data[i]) == 0 and i == 2) or i == 8 or i == 9 or i == 10:  # não adicionar espaços em branco que vem na mensagem...
+                continue
+            if i == 7:
+                mensagem = mensagem + str(aux.monta_inteiro_from_bytes(data[7:11])) + ';'
+            elif i == 11:
+                mensagem = mensagem + str(aux.monta_byte_to_signed_int(str(ord(data[i])))) + ';'
+            else:
+                mensagem = mensagem + str(ord(data[i])) + ";"
+
+        # print("msg reconstruida, " + mensagem)
+        return str(mensagem)
 
     elif funcao == 8 or funcao == 11:  # Funções 8 e 11 possuem a mesma estrutura (Alteração no valor de reativo BC e Alteração em estado de BC, respectivamente)
 
@@ -1249,7 +1311,8 @@ try:
             # print('rcvdData_semDecode: ', rcvdData_semDecode)
 
             # rcvdData = rcvdData_semDecode.decode()
-            rcvdData = c.recv(1024).decode()
+
+            rcvdData = c.recv(1024).decode('utf-8')
             # print('rcvdData: ', rcvdData)
 
             decodifica_mensagem(c, rcvdData)

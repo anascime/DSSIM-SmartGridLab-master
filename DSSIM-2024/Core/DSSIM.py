@@ -15,6 +15,7 @@ from decimal import ROUND_UP
 import socket
 # import pandas as pd
 import ctypes
+from statistics import variance
 import time
 import datetime
 import pandas as pd
@@ -349,7 +350,7 @@ class DSSim:
 
             step_pu = (maxtap - mintap) / num_taps
 
-            step = (taps_array[winding-1] - 1.0) / step_pu
+            step = (taps_array[winding-1] - 1.0) / step_pu + (num_taps / 2 + 1)
 
         return taps_array[winding-1], int(round(step))   # int(-1.0) estava retornando 0 (int) ao invés de -1 (int)
 
@@ -554,7 +555,7 @@ class DSSim:
             # print("Fluxo")
             return "Fluxo"
 
-    def varia_tap(self, transformer_name, variacao_tap):
+    def varia_tap(self, transformer_name, tap):
         """ Método que recebe o nome de um trafo e uma variacao de tap e varia o tap do respectivo trafo"""
 
         # O tap no OpenDSS é especificado em pu. Por isso, precisamos converter para pu.
@@ -562,6 +563,8 @@ class DSSim:
         maxtap = float(self.send_dss_command("? " + transformer_name + ".maxtap"))
         mintap = float(self.send_dss_command("? " + transformer_name + ".mintap"))
         num_taps = float(self.send_dss_command("? " + transformer_name + ".numtaps"))
+        tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
+
 
         step_pu = (maxtap - mintap) / num_taps
 
@@ -578,10 +581,11 @@ class DSSim:
             wdg = 2
 
         self.send_dss_command(transformer_name + ".wdg=" + str(wdg))
-        tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
+        novo_tap = mintap + (tap - 1) * step_pu
 
-        # Calcula novo tap em pu
-        novo_tap = float(tap_atual) + variacao_tap*step_pu
+        # Verifica se tap está nos extremos (mínimo ou máximo)
+        if novo_tap > maxtap or novo_tap < mintap:
+            return "OK"
 
         # Seta novo tap
         self.send_dss_command(transformer_name + ".tap=" + str(novo_tap))
@@ -753,14 +757,15 @@ class DSSim:
         self.frame_guids["Nome OpenDSS"] = self.frame_guids["Nome Completo"].str.split('.').str.get(1)
         self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"]
         self.frame_guids["Id Sinap"] = self.frame_guids.index
-        # self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(0)
-        # self.frame_guids["Id Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(1)
-        print('self.frame_guids:\n', self.frame_guids.to_markdown())
-        # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
-        # self.frame_guids.to_csv(output_path)
+
+        #! print tabela
+        # print('self.frame_guids:\n', self.frame_guids.to_markdown())
+        # print(self.frame_guids.head())
         self.frame_guids.drop("Completo", axis=1, inplace=True)
 
-        # print(self.frame_guids.head())
+        # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
+        # self.frame_guids.to_csv(output_path)
+
 
     def armazena_nomes_barras(self):
         """Exporta arquivos coordenadas
