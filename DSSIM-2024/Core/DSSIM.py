@@ -746,6 +746,7 @@ class DSSim:
         Usaremos este método para armazenar os nomes de todos os
         elementos em um dataframe somente uma vez
         """
+
         self.send_dss_command("export uuids")  #* substituição guids → uuids
         # self.send_dss_command("export guids")     # Verificar pq não está retornando o endereço do arquivo exportado
         casename = self.send_dss_command("get casename").decode() #> casename = circuit
@@ -765,7 +766,6 @@ class DSSim:
 
         # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
         # self.frame_guids.to_csv(output_path)
-
 
     def armazena_nomes_barras(self):
         """Exporta arquivos coordenadas
@@ -830,39 +830,44 @@ class DSSim:
     def solve_time(self, hora, minuto, segundo):
         """Método que comanda a simulação de um novo fluxo de potência no OpenDSS-G."""
 
-        tempo_hora = float(hora) + float(minuto) / 60.0 + float(segundo) / 3600.0
+        try:
+            tempo_hora = float(hora) + float(minuto) / 60.0 + float(segundo) / 3600.0
 
-        if self.is_first_simulation:
+            if self.is_first_simulation:
 
-            self.initial_time_step = 0.1
-            # necessário definir o modo de simulação e passo de tempo
-            self.send_dss_command("set mode=daily")
-            self.send_dss_command("set controlmode=static")
-            self.send_dss_command("set number=1")
+                self.initial_time_step = 0.1
+                # necessário definir o modo de simulação e passo de tempo
+                self.send_dss_command("set mode=daily")
+                self.send_dss_command("set controlmode=static")
+                self.send_dss_command("set number=1")
 
-            self.send_dss_command("set stepsize=" + str(self.initial_time_step))  # na primeira solução, um stepsize bem baixo só para o relógio do OpenDSS-G não avançar muito.
-            self.send_dss_command("set hour=" + str(tempo_hora))  # seta o tempo para o horário definido no inócio da simulação.
-            self.is_first_simulation = False
-        else:
-            if self.time_step is None:  # se ainda não foi definido
-                self.time_step = (float(hora)-self.current_time[0])*3600.0 + (float(minuto)-self.current_time[1])*60.0 + (float(segundo) - self.current_time[2]) \
-                                 + self.initial_time_step  # Passo de tempo do Módulo Central em segundos
-                self.send_dss_command("set stepsize=" + str(self.time_step))
-                self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
-                self.send_dss_command("set sec=" + str(float(minuto)*60.0 + float(segundo)))
-
-                # Uma vez definido, não precisamos alterar o time_step (pois todos os eventos cadastrados no Módulo Central acontecem em instantes de tempo
-                # múltiplos do passo de tempo
-
+                self.send_dss_command("set stepsize=" + str(self.initial_time_step))  # na primeira solução, um stepsize bem baixo só para o relógio do OpenDSS-G não avançar muito.
+                self.send_dss_command("set hour=" + str(tempo_hora))  # seta o tempo para o horário definido no inócio da simulação.
+                self.is_first_simulation = False
             else:
-                # Checar se corresponde a uma nova simulação. Isto é, se o tempo especificado é menor que o atual.
-                tempo_seg = float(hora) * 3600.0 + float(minuto) * 60.0 + float(segundo)
-                # tempo_atual_sec = float(self.get_simulation_time('s'))
-                tempo_atual_sec = self.get_simulation_time('s')
-                if tempo_seg < (tempo_atual_sec - self.time_step):
+                if self.time_step is None:  # se ainda não foi definido
+                    self.time_step = (float(hora)-self.current_time[0])*3600.0 + (float(minuto)-self.current_time[1])*60.0 + (float(segundo) - self.current_time[2]) \
+                                    + self.initial_time_step  # Passo de tempo do Módulo Central em segundos
+                    self.send_dss_command("set stepsize=" + str(self.time_step))
                     self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
-                    self.send_dss_command("set sec=" + str(float(minuto) * 60.0 + float(segundo)))
+                    self.send_dss_command("set sec=" + str(float(minuto)*60.0 + float(segundo)))
 
-        self.step_in()
+                    # Uma vez definido, não precisamos alterar o time_step (pois todos os eventos cadastrados no Módulo Central acontecem em instantes de tempo
+                    # múltiplos do passo de tempo
 
-        # self.send_dss_command("Solve")
+                else:
+                    # Checar se corresponde a uma nova simulação. Isto é, se o tempo especificado é menor que o atual.
+                    tempo_seg = float(hora) * 3600.0 + float(minuto) * 60.0 + float(segundo)
+                    # tempo_atual_sec = float(self.get_simulation_time('s'))
+                    tempo_atual_sec = self.get_simulation_time('s')
+                    if tempo_seg < (tempo_atual_sec - self.time_step):
+                        self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
+                        self.send_dss_command("set sec=" + str(float(minuto) * 60.0 + float(segundo)))
+
+            self.step_in()
+
+            # self.send_dss_command("Solve")
+
+        except Exception as e:
+            print(f'Erro ({e}).')
+            raise e

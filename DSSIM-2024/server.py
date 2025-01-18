@@ -6,12 +6,15 @@ import struct
 import datetime
 import threading
 import time
+
+from networkx import identified_nodes
 # import thread
 # import Core.MC as coreMC
 # import Core.DSSIM as DSSIM
 import App.Fontes.Auxiliar as aux
 from Tools.test_tools import *
 import Core.DSSIM as DSSIM
+from Tools.error_messages import ErrorMessages
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
@@ -326,8 +329,19 @@ def process_data(msg):
                         # equipamento.append(struct.pack('<Q', id_barra_ref)[3])
 
                     elif tipo_equipamento == "4" or tipo_equipamento == "5":  # Transformador ou Regulador de Tensão
-
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
+
+                        if nome_opendss.split('.')[0].lower() != "transformer":
+                            raise ValueError(f"\nid: {id_equipamento}\n\
+                                             Equipamento {nome_opendss} não é um Transformer ou RegControl")
+
+                        try:
+                            tap1, step1 = dssim_obj.get_transformer_tap(nome_opendss, 1)
+                            tap2, step2 = dssim_obj.get_transformer_tap(nome_opendss, 2)
+                            pass
+                        except ValueError as e:
+                            raise e
+
                         voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                         voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
@@ -433,8 +447,8 @@ def process_data(msg):
                         equipamento.append(in2_.decode('latin-1'))  # Módulo Neutro - Terminal 1
                         equipamento.append(in2_angle.decode('latin-1'))  # Ângulo Neutro - Terminal 1
 
-                        tap1, step1 = dssim_obj.get_transformer_tap(nome_opendss, 1)
-                        tap2, step2 = dssim_obj.get_transformer_tap(nome_opendss, 2)
+                        # tap1, step1 = dssim_obj.get_transformer_tap(nome_opendss, 1)
+                        # tap2, step2 = dssim_obj.get_transformer_tap(nome_opendss, 2)
 
                         if step2 != 0:
                             step = struct.pack('<h', step2)[0]
@@ -907,7 +921,13 @@ def decodifica_mensagem(conn, data):
                 print(f'len_resposta: {resposta_len}\n')
 
                 # conn.sendall(resposta)
-                conn.send(resposta.encode('latin'))
+                try:
+                    conn.send(resposta.encode('latin'))
+                    pass
+                except ConnectionAbortedError:
+                    print(f'Erro de conexão (ConnectionAbortedError).')
+                else:
+                    pass
 
             # Verifica se a decodificação dos dados recebidos deve prosseguir
             if quantidade_bytes < tamanho_mensagem:
@@ -1305,30 +1325,42 @@ try:
 
     def main(c,numOfThread):
         while True:
-            # print('main while ', i)
-
-            # rcvdData_semDecode = c.recv(1024)
-            # print('rcvdData_semDecode: ', rcvdData_semDecode)
-
-            # rcvdData = rcvdData_semDecode.decode()
 
             rcvdData = c.recv(1024).decode('utf-8')
             # print('rcvdData: ', rcvdData)
 
             decodifica_mensagem(c, rcvdData)
-
-            # print(f'Thread: {numOfThread+1}\n')
-            # print(f'Thread: {numOfThread+1}\n\t S: {rcvdData}')
-
-            # sendData = input('N: ')
-            # c.send(sendData.encode())
-
-            # if(sendData.lower() == 'bye'):
-            #     break
             if(rcvdData == ''):
                 c.close()
+            pass
+            # try:
+            #     # rcvdData_semDecode = c.recv(1024)
+            #     # print('rcvdData_semDecode: ', rcvdData_semDecode)
 
-        c.close()
+            #     # rcvdData = rcvdData_semDecode.decode()
+
+            #     rcvdData = c.recv(1024).decode('utf-8')
+            #     # print('rcvdData: ', rcvdData)
+
+            #     decodifica_mensagem(c, rcvdData)
+
+            #     # print(f'Thread: {numOfThread+1}\n')
+            #     # print(f'Thread: {numOfThread+1}\n\t S: {rcvdData}')
+
+            #     # sendData = input('N: ')
+            #     # c.send(sendData.encode())
+
+            #     # if(sendData.lower() == 'bye'):
+            #     #     break
+            #     if(rcvdData == ''):
+            #         c.close()
+            #     pass
+            # except Exception as e:
+            #     # raise e
+            #     print(f'Fechando a conexão por erro ({e}) e liberando a porta {PORT}.')
+            #     c.close()
+            #     sys.exit()
+
 
     while True:
         # print('while ', i)
@@ -1348,6 +1380,13 @@ except KeyboardInterrupt:
     print(f'Fechando a conexão e liberando a porta {PORT}.')
     c.close()
     sys.exit()
+
+except Exception as e:
+
+    print(f'Fechando a conexão por erro ({e}) e liberando a porta {PORT}.')
+    c.close()
+    sys.exit()
+
 
 
 
