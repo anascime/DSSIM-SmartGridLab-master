@@ -7,10 +7,10 @@ import datetime
 import threading
 import time
 
-from networkx import identified_nodes
+#from network import identified_nodes
 # import thread
 # import Core.MC as coreMC
-# import Core.DSSIM as DSSIM
+# import Core.DSSIM as DSSIMmas essixi
 import App.Fontes.Auxiliar as aux
 from Tools.test_tools import *
 import Core.DSSIM as DSSIM
@@ -916,9 +916,9 @@ def decodifica_mensagem(conn, data):
 
                 #~ prints de MONITORAMENTO: tamanho da mensagem
                 # print('\nlen_data: ', data_len)
-                print('data_encode:\t\t', data.encode())
-                print('resposta_encode:\t', resposta.encode())
-                print(f'len_resposta: {resposta_len}\n')
+                # print('data_encode:\t\t', data.encode())
+                # print('resposta_encode:\t', resposta.encode())
+                # print(f'len_resposta: {resposta_len}\n')
 
                 # conn.sendall(resposta)
                 try:
@@ -1325,9 +1325,16 @@ try:
 
     def main(c,numOfThread):
         while True:
-
-            rcvdData = c.recv(1024).decode('utf-8')
-            # print('rcvdData: ', rcvdData)
+            try:
+                rcvdData = c.recv(1024).decode('utf-8')
+                # print('rcvdData: ', rcvdData)
+                pass
+            except ConnectionAbortedError as e:
+                print(f"Uma conexão estabelecida foi anulada pelo software no computador host (Erro: {e})")
+            except Exception as e:
+                raise e
+            else:
+                pass
 
             decodifica_mensagem(c, rcvdData)
             if(rcvdData == ''):
