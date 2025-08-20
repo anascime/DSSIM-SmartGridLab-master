@@ -528,6 +528,9 @@ class DSSim:
             # nome_opendss = self.frame_buses.loc[(self.frame_buses["Id Sinap"] == id_equipamento), ["Nome Completo"]].values[0][0]
         return nome_opendss
 
+    def get_frame_csv_final(self):
+        self.frame_guids = pd.read_csv(self.data_path + "/" + "UUIDS_final.csv", engine='python')
+
     def get_last_simulation_type(self):    # Testa!!
         """ Método que identifica se o último tipo de simulação realizado pelo DSSim é do tipo Fluxo ou Curto.
         A lógica será a seguinte: se houver um elemento fault na rede, será do tipo Curto. Caso contrário, tipo Fluxo.
@@ -536,7 +539,8 @@ class DSSim:
         Export GUIDS. Se um elemento da classe "Fault" for identificado e se a sua propriedade "enabled" for "true",
         o resultado será "Curto", caso contrário, será "Fluxo"."""
 
-        self.armazena_nomes_elementos()
+        # self.armazena_nomes_elementos()
+        self.get_frame_csv_final()
         try:
 
             nome_falta = self.frame_guids.loc[(self.frame_guids["Tipo Elemento"] == "Fault"), ["Nome OpenDSS"]]["Nome OpenDSS"].tolist()
@@ -749,6 +753,7 @@ class DSSim:
 
         self.send_dss_command("export uuids")  #* substituição guids → uuids
         # self.send_dss_command("export guids")     # Verificar pq não está retornando o endereço do arquivo exportado
+
         casename = self.send_dss_command("get casename").decode() #> casename = circuit
         nomes = ["Completo"]
         self.frame_guids = pd.read_csv(self.data_path + "/" + casename + "_EXP_UUIDS.CSV", engine='python', names=nomes)
@@ -763,6 +768,8 @@ class DSSim:
         # print('self.frame_guids:\n', self.frame_guids.to_markdown())
         # print(self.frame_guids.head())
         self.frame_guids.drop("Completo", axis=1, inplace=True)
+
+        cria_csv_id(self.frame_guids, self.data_path)
 
         # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
         # self.frame_guids.to_csv(output_path)
@@ -808,6 +815,10 @@ class DSSim:
         #! timedelta espera int
         tempo_atual = str(datetime.timedelta(seconds=tempo_atual_sec))  # datetime
 
+        # Se o tempo for negativo, ajustamos a string
+        if 'day' in tempo_atual:
+            tempo_atual = tempo_atual.split(", ")[-1]  # Pega apenas a parte 'hh:mm:ss'
+
         #! current_time é uma lista de int
         self.current_time[0] = float(tempo_atual.split(":")[0])
         self.current_time[1] = float(tempo_atual.split(":")[1])
@@ -815,7 +826,7 @@ class DSSim:
 
         specified_time = float(hora)*3600.0 + float(minuto)*60.0 + float(segundo)
 
-        # print("Tempo Atual: " + tempo_atual + "       Tempo Especificado: " + hora + ":" + minuto + ":" + segundo)
+        print("Tempo Atual: " + tempo_atual + "       Tempo Especificado: " + hora + ":" + minuto + ":" + segundo)
 
         if self.time_step is None and tempo_atual_sec != specified_time:  # Na primeira simulação de todas
             # print("Simular - Fluxo Inicial")

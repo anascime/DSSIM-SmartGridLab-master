@@ -6,7 +6,15 @@ Unidade com funções auxiliares.
 
 __author__ = 'CelsoRocha' and 'Paulo Radatz'
 import struct
+import pandas
 
+
+def cria_csv_id(df, path):
+    """ Cria csv dos equipamentos e seus ids
+    """
+
+    df.to_csv(path + "/UUIDS_final.csv")
+    print("Arquivo UUIDS_final.csv criado com sucesso!")
 
 def escreve_lista(nome, lista):
     arquivo_saida = open(nome + ".txt", "w")
