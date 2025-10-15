@@ -38,5 +38,6 @@ ARQUIVOS_RODAR_E_MC_REV2**
 **.pyc
 venv**/
 .vscode/
-01_testeMC(2).Dsp
-CircuitoTesteMC(2).dss
+*.Dsp
+*.dss
+UUIDS*.csv
