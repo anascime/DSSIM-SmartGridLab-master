@@ -53,7 +53,9 @@ def monta_inteiro_from_bytes(string):
         while tamanho < 9:
             string = string + "\x00"
             tamanho = len(string) + 1
-    stringb = string.encode()
+    # stringb = string.encode('latin-1')
+    stringb = string.encode('latin')
+    # stringb = string.encode()
     # tx = b'\x00\x12\x04\x00\x00\x00\x00\x00'
     return struct.unpack('<Q', stringb)[0]
 

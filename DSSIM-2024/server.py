@@ -46,9 +46,9 @@ def process_data(msg):
         # parece que a mensagem é bem menor, mas isso é porque vários "chars" enviados
         # pelo C++ são nulos, o que vira um char "", que na hora do print, não aparece.
 
+        print(msg)
         message = reconstroi_msg(msg)
         # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.REC, message + "\n\n")
-        print(msg)
         print(message)
 
         msg_dividida = message.split(";")
@@ -173,7 +173,7 @@ def process_data(msg):
                     equipamento.append(chr(int(tipo_equipamento)))  # Tipo
 
                     id_equip_bytes = struct.pack('<Q', int(id_equipamento))[0:4]  # Id
-                    equipamento.append(id_equip_bytes.decode())
+                    equipamento.append(id_equip_bytes.decode("latin-1"))
 
                     if tipo_equipamento == "1":  # Barra
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento, "barra")
@@ -314,7 +314,7 @@ def process_data(msg):
                         equipamento.append((struct.pack('<f', p_c)[0:4]).decode())  # Módulo Neutro
                         equipamento.append((struct.pack('<f', q_c)[0:4]).decode())  # Ângulo Neutro
 
-                        # Id da barra de referência (assumi como sendo a barra 1 da chave) Convertendo o valor do ID para 4 bytes segundo o formato Little Endian
+                        #! Id da barra de referência (assumi como sendo a barra 1 da chave) Convertendo o valor do ID para 4 bytes segundo o formato Little Endian
                         swtobj = dssim_obj.send_dss_command("? " + nome_opendss + ".SwitchedObj")
                         # barra_ref_nome = dssim_obj.send_dss_command("? " + swtobj.decode() + ".bus1")
 
@@ -922,7 +922,12 @@ def decodifica_mensagem(conn, data):
 
                 # conn.sendall(resposta)
                 try:
-                    conn.send(resposta.encode('latin'))
+                    print(resposta)
+                    print("latin:\t", resposta.encode('latin'))
+                    print("\nlatin-1:\t", resposta.encode('latin-1'))
+                    print("\nutf-8:\t", resposta.encode('utf-8'))
+                    resp = resposta.encode('latin-1')
+                    conn.send(resp)
                     pass
                 except ConnectionAbortedError:
                     print(f'Erro de conexão (ConnectionAbortedError).')
@@ -945,6 +950,8 @@ def decodifica_mensagem(conn, data):
 
         else:  # Mensagem recebida está incompleta
             decodificar_dados_recebidos = False
+
+
         print(u'\u2500' * 10, end='\n\n')
 
 def reconstroi_msg(data):
@@ -1326,7 +1333,9 @@ try:
     def main(c,numOfThread):
         while True:
             try:
-                rcvdData = c.recv(1024).decode('utf-8')
+                # rcvdData = c.recv(1024).decode('utf-8')
+                data = c.recv(1024)
+                rcvdData = data.decode('latin-1')
                 # print('rcvdData: ', rcvdData)
                 pass
             except ConnectionAbortedError as e:
@@ -1373,6 +1382,7 @@ try:
         # print('while ', i)
         c, addr = s.accept()
         print('Conexão estabelecida com', addr)
+        print("\n")
 
         # thread.start_new_thread(main,(c,i,))
         t1 = threading.Thread(target=main, args=(c,1,))
