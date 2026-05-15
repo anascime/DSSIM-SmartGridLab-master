@@ -8,6 +8,11 @@ def teste_cria_resposta_encodada(msg):
 
     return resposta
 
+def set_taps():
+
+    r = input("Alterar valores dos taps do trafo? (s/n)\n--> ")
+
+    return r
 
 def func100acknowledgment(funcao, flag):
     """ Funcao resposta para o MC às funções 03, 04, 05, 06, 07, 08, 09, 10 e 11. Se todos os dados
