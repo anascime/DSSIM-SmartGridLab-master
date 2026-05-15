@@ -766,7 +766,7 @@ class DSSim:
 
         #! print tabela
         # print('self.frame_guids:\n', self.frame_guids.to_markdown())
-        # print(self.frame_guids.head())
+        print(self.frame_guids.head().to_markdown())
         self.frame_guids.drop("Completo", axis=1, inplace=True)
 
         cria_csv_id(self.frame_guids, self.data_path)
