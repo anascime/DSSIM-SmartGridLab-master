@@ -915,10 +915,17 @@ def decodifica_mensagem(conn, data):
                 # print('resposta: ', resposta)
 
                 #~ prints de MONITORAMENTO: tamanho da mensagem
-                # print('\nlen_data: ', data_len)
-                # print('data_encode:\t\t', data.encode())
-                # print('resposta_encode:\t', resposta.encode())
-                # print(f'len_resposta: {resposta_len}\n')
+                print('\nutf-8')
+                print('\nlen_data: ', data_len)
+                print('data_encode:\t\t', data.encode())
+                print('resposta_encode:\t', resposta.encode())
+                print(f'len_resposta: {resposta_len}\n')
+
+                print('\nlatin-1')
+                print('len_data: ', data_len)
+                print('data_encode:\t\t', data.encode('latin-1'))
+                print('resposta_encode:\t', resposta.encode('latin-1'))
+                print(f'len_resposta: {resposta_len}\n')
 
                 # conn.sendall(resposta)
                 try:
@@ -926,7 +933,7 @@ def decodifica_mensagem(conn, data):
                     print("latin:\t", resposta.encode('latin'))
                     print("\nlatin-1:\t", resposta.encode('latin-1'))
                     print("\nutf-8:\t", resposta.encode('utf-8'))
-                    resp = resposta.encode('latin-1')
+                    resp = resposta.encode('utf-8')
                     conn.send(resp)
                     pass
                 except ConnectionAbortedError:
