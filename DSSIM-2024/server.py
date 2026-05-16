@@ -531,33 +531,56 @@ def process_data(msg):
                         equipamento.append(vn.decode('latin-1'))  # Módulo Neutro - Terminal 1
                         equipamento.append(vn_angle.decode('latin-1'))  # Ângulo Neutro - Terminal 1
 
-                        ia = currents[0]
-                        ib = currents[2]
-                        ic = currents[4]
+                        ia = struct.pack('<f', currents[0])[0:4]
+                        ib = struct.pack('<f', currents[2])[0:4]
+                        ic = struct.pack('<f', currents[4])[0:4]
+                        # ia = currents[0]
+                        # ib = currents[2]
+                        # ic = currents[4]
 
                         if tipo_equipamento == "9":  # Suprimento
                             if 0 <= currents[1] <= 180:  # deixar sempre entre 0 e 180
-                                ia_angle = currents[1] - 180
+                                ia_angle = struct.pack('<f', currents[1] - 180)[0:4]
+                                # ia_angle = currents[1] - 180
                             else:
-                                ia_angle = currents[1] + 180
+                                ia_angle = struct.pack('<f', currents[1] + 180)[0:4]
+                                # ia_angle = currents[1] + 180
                             if 0 <= currents[3] <= 180:  # deixar sempre entre 0 e 180
-                                ib_angle = currents[3] - 180
+                                ib_angle = struct.pack('<f', currents[3] - 180)[0:4]
+                                # ib_angle = currents[3] - 180
                             else:
-                                ib_angle = currents[3] + 180
+                                ib_angle = struct.pack('<f', currents[3] + 180)[0:4]
+                                # ib_angle = currents[3] + 180
                             if 0 <= currents[5] <= 180:  # deixar sempre entre 0 e 180
-                                ic_angle = currents[5] - 180
+                                ic_angle = struct.pack('<f', currents[5] - 180)[0:4]
+                                # ic_angle = currents[5] - 180
                             else:
-                                ic_angle = currents[5] + 180
+                                ic_angle = struct.pack('<f', currents[5] + 180)[0:4]
+                                # ic_angle = currents[5] + 180
 
                         else:  # Carga
-                            ia_angle = currents[1]
-                            ib_angle = currents[3]
-                            ic_angle = currents[5]
+                            ia_angle = struct.pack('<f', currents[1])[0:4]
+                            ib_angle = struct.pack('<f', currents[3])[0:4]
+                            ic_angle = struct.pack('<f', currents[5])[0:4]
+                            # ia_angle = currents[1]
+                            # ib_angle = currents[3]
+                            # ic_angle = currents[5]
 
-                        # in1_ = currents[6]  # in_
-                        # in1_angle = currents[7]
-                        in_ = 0
-                        in_angle = 0
+                        in_ = struct.pack('<f', 0)[0:4]
+                        in_angle = struct.pack('<f', 0)[0:4]
+                        # in_ = struct.pack('<f', currents[6])[0:4]
+                        # in_angle = struct.pack('<f', currents[7])[0:4]
+                        # in_ = 0
+                        # in_angle = 0
+
+                        equipamento.append(ia.decode('latin-1'))  # Módulo Fase A
+                        equipamento.append(ia_angle.decode('latin-1'))  # Ângulo Fase
+                        equipamento.append(ib.decode('latin-1'))  # Módulo Fase B
+                        equipamento.append(ib_angle.decode('latin-1'))  # Ângulo Fase B
+                        equipamento.append(ic.decode('latin-1'))  # Módulo Fase C
+                        equipamento.append(ic_angle.decode('latin-1'))  # Ângulo Fase C
+                        equipamento.append(in_.decode('latin-1'))  # Módulo Neutro
+                        equipamento.append(in_angle.decode('latin-1'))  # Ângulo Neutro
 
                         equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
                         equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
@@ -575,8 +598,10 @@ def process_data(msg):
                             p_3f = powers_total[0]/1000.0
                             q_3f = powers_total[1]/1000.0
 
-                        equipamento.append(struct.pack('<f', p_3f)[0:4])  # Potência Ativa Trifásica, sentido saindo do suprimento
-                        equipamento.append(struct.pack('<f', q_3f)[0:4])  # Potência Reativa Trifásica, sentido saindo do suprimento
+                        equipamento.append((struct.pack('<f', p_3f)[0:4]).decode())  # Potência Ativa Trifásica, sentido saindo do suprimento
+                        equipamento.append((struct.pack('<f', q_3f)[0:4]).decode())  # Potência Reativa Trifásica, sentido saindo do suprimento
+                        # equipamento.append(struct.pack('<f', p_3f)[0:4])  # Potência Ativa Trifásica, sentido saindo do suprimento
+                        # equipamento.append(struct.pack('<f', q_3f)[0:4])  # Potência Reativa Trifásica, sentido saindo do suprimento
 
                     elif tipo_equipamento == "11":  # Filtro
                         form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
@@ -930,10 +955,10 @@ def decodifica_mensagem(conn, data):
                 # conn.sendall(resposta)
                 try:
                     print(resposta)
-                    print("latin:\t", resposta.encode('latin'))
+                    print("latin:\t\t", resposta.encode('latin'))
                     print("\nlatin-1:\t", resposta.encode('latin-1'))
-                    print("\nutf-8:\t", resposta.encode('utf-8'))
-                    resp = resposta.encode('utf-8')
+                    print("\nutf-8:\t\t", resposta.encode('utf-8'))
+                    resp = resposta.encode('latin-1')
                     conn.send(resp)
                     pass
                 except ConnectionAbortedError:
