@@ -7,6 +7,8 @@ import datetime
 import threading
 import time
 
+from numpy import true_divide
+
 #from network import identified_nodes
 # import thread
 # import Core.MC as coreMC
@@ -511,6 +513,18 @@ def process_data(msg):
                         currents = dssim_obj.get_elem_currents(nome_opendss)
                         powers_total = dssim_obj.get_total_powers(nome_opendss, 1)  # salva array com registros
 
+
+                        # #! Emulador de carga 2.0 soma
+                        # em_carga = True
+                        # if em_carga:
+                        #     for i, val in enumerate(voltages):
+                        #         print('voltages[i]: ', voltages[i])
+                        #         if i == 1:
+                        #             voltages[i]=val+2.0
+                        #         if i == 2:
+                        #             voltages[i]=val+2.0
+                        #         print('voltages[i]: ', voltages[i])
+
                         va = struct.pack('<f', voltages[0])[0:4]
                         va_angle = struct.pack('<f', voltages[1])[0:4]
                         vb = struct.pack('<f', voltages[2])[0:4]
@@ -582,14 +596,14 @@ def process_data(msg):
                         equipamento.append(in_.decode('latin-1'))  # Módulo Neutro
                         equipamento.append(in_angle.decode('latin-1'))  # Ângulo Neutro
 
-                        equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
-                        equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
-                        equipamento.append(struct.pack('<f', ib)[0:4])  # Módulo Fase B
-                        equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ângulo Fase B
-                        equipamento.append(struct.pack('<f', ic)[0:4])  # Módulo Fase C
-                        equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ângulo Fase C
-                        equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
-                        equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
+                        # equipamento.append(struct.pack('<f', ia)[0:4])  # Módulo Fase A
+                        # equipamento.append(struct.pack('<f', ia_angle)[0:4])  # Ângulo Fase
+                        # equipamento.append(struct.pack('<f', ib)[0:4])  # Módulo Fase B
+                        # equipamento.append(struct.pack('<f', ib_angle)[0:4])  # Ângulo Fase B
+                        # equipamento.append(struct.pack('<f', ic)[0:4])  # Módulo Fase C
+                        # equipamento.append(struct.pack('<f', ic_angle)[0:4])  # Ângulo Fase C
+                        # equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
+                        # equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
 
                         if tipo_equipamento == "9":  # Suprimento
                             p_3f = powers_total[0] * -1/1000.0
@@ -598,8 +612,8 @@ def process_data(msg):
                             p_3f = powers_total[0]/1000.0
                             q_3f = powers_total[1]/1000.0
 
-                        equipamento.append((struct.pack('<f', p_3f)[0:4]).decode())  # Potência Ativa Trifásica, sentido saindo do suprimento
-                        equipamento.append((struct.pack('<f', q_3f)[0:4]).decode())  # Potência Reativa Trifásica, sentido saindo do suprimento
+                        equipamento.append((struct.pack('<f', p_3f)[0:4]).decode('latin-1'))  # Potência Ativa Trifásica, sentido saindo do suprimento
+                        equipamento.append((struct.pack('<f', q_3f)[0:4]).decode('latin-1'))  # Potência Reativa Trifásica, sentido saindo do suprimento
                         # equipamento.append(struct.pack('<f', p_3f)[0:4])  # Potência Ativa Trifásica, sentido saindo do suprimento
                         # equipamento.append(struct.pack('<f', q_3f)[0:4])  # Potência Reativa Trifásica, sentido saindo do suprimento
 
@@ -940,24 +954,23 @@ def decodifica_mensagem(conn, data):
                 # print('resposta: ', resposta)
 
                 #~ prints de MONITORAMENTO: tamanho da mensagem
-                print('\nutf-8')
-                print('\nlen_data: ', data_len)
-                print('data_encode:\t\t', data.encode())
-                print('resposta_encode:\t', resposta.encode())
-                print(f'len_resposta: {resposta_len}\n')
+                # print('\nutf-8')
+                # print('\nlen_data: ', data_len)
+                # print('data_encode:\t\t', data.encode())
+                # print('resposta_encode:\t', resposta.encode())
+                # print(f'len_resposta: {resposta_len}\n')
 
-                print('\nlatin-1')
-                print('len_data: ', data_len)
-                print('data_encode:\t\t', data.encode('latin-1'))
-                print('resposta_encode:\t', resposta.encode('latin-1'))
-                print(f'len_resposta: {resposta_len}\n')
+                # print('\nlatin-1')
+                # print('len_data: ', data_len)
+                # print('data_encode:\t\t', data.encode('latin-1'))
+                # print('resposta_encode:\t', resposta.encode('latin-1'))
+                # print(f'len_resposta: {resposta_len}\n')
 
                 # conn.sendall(resposta)
                 try:
-                    print(resposta)
-                    print("latin:\t\t", resposta.encode('latin'))
+                    # print(resposta)
                     print("\nlatin-1:\t", resposta.encode('latin-1'))
-                    print("\nutf-8:\t\t", resposta.encode('utf-8'))
+                    # print("\nutf-8:\t\t", resposta.encode('utf-8'))
                     resp = resposta.encode('latin-1')
                     conn.send(resp)
                     pass
