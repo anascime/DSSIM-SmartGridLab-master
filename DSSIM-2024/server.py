@@ -1,12 +1,10 @@
 # -*- coding: UTF-8 -*-
-
 import sys
 import socket
 import struct
 import datetime
 import threading
 import time
-
 from numpy import true_divide
 
 #from network import identified_nodes
@@ -21,12 +19,6 @@ from Tools.error_messages import ErrorMessages
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
 BUFFER_SIZE = 8192  # Qual valor utilizar aqui?
-
-
-# resp92 = "\x02\x80\x00"
-# resp92_enc = resp92.encode('latin')
-# resp94 = "\x02\x79\x00"
-# resp94_enc = resp94.encode('latin')
 
 
 dssim_obj = DSSIM.DSSim(TCP_IP, TCP_PORT, BUFFER_SIZE, None)    #> teste
@@ -1364,7 +1356,6 @@ try:
     print('Socket criado com sucesso')
 
     s.bind((HOST, PORT))
-
     print('socket escutando em %s' %(PORT))
 
     s.listen(5) # põe socket em modo escuta
@@ -1372,16 +1363,11 @@ try:
 
     # MC = coreMC.MC
 
-
-    i = 0
-
     def main(c,numOfThread):
         while True:
             try:
-                # rcvdData = c.recv(1024).decode('utf-8')
-                data = c.recv(1024)
+                data = c.recv(1024)  # lê blocos de até 1024 bytes por vez
                 rcvdData = data.decode('latin-1')
-                # print('rcvdData: ', rcvdData)
                 pass
             except ConnectionAbortedError as e:
                 print(f"Uma conexão estabelecida foi anulada pelo software no computador host (Erro: {e})")
@@ -1394,47 +1380,15 @@ try:
             if(rcvdData == ''):
                 c.close()
             pass
-            # try:
-            #     # rcvdData_semDecode = c.recv(1024)
-            #     # print('rcvdData_semDecode: ', rcvdData_semDecode)
-
-            #     # rcvdData = rcvdData_semDecode.decode()
-
-            #     rcvdData = c.recv(1024).decode('utf-8')
-            #     # print('rcvdData: ', rcvdData)
-
-            #     decodifica_mensagem(c, rcvdData)
-
-            #     # print(f'Thread: {numOfThread+1}\n')
-            #     # print(f'Thread: {numOfThread+1}\n\t S: {rcvdData}')
-
-            #     # sendData = input('N: ')
-            #     # c.send(sendData.encode())
-
-            #     # if(sendData.lower() == 'bye'):
-            #     #     break
-            #     if(rcvdData == ''):
-            #         c.close()
-            #     pass
-            # except Exception as e:
-            #     # raise e
-            #     print(f'Fechando a conexão por erro ({e}) e liberando a porta {PORT}.')
-            #     c.close()
-            #     sys.exit()
-
 
     while True:
-        # print('while ', i)
         c, addr = s.accept()
         print('Conexão estabelecida com', addr)
         print("\n")
 
-        # thread.start_new_thread(main,(c,i,))
         t1 = threading.Thread(target=main, args=(c,1,))
         t1.start()
         t1.join()
-
-        i+=1
 
         s.close()
 
@@ -1444,29 +1398,6 @@ except KeyboardInterrupt:
     sys.exit()
 
 except Exception as e:
-
     print(f'Fechando a conexão por erro ({e}) e liberando a porta {PORT}.')
     c.close()
     sys.exit()
-
-
-
-
-    # # a forever loop until we interrupt it or
-    # # an error occurs
-    # while True:
-
-    #     # Establish connection with client.
-    #     c, addr = s.accept()
-    #     print ('Conexão estabelecida com', addr)
-
-    #     # send a thank you message to the client. encoding to send byte type.
-    #     c.send('Gratiluz por conectar'.encode())
-
-    #     # Close the connection with the client
-    #     c.close()
-    #     print('socket fechado')
-
-    #     # Breaking once connection closed
-    #     break
-
