@@ -6,7 +6,15 @@ Unidade com funções auxiliares.
 
 __author__ = 'CelsoRocha' and 'Paulo Radatz'
 import struct
+import pandas
 
+
+def cria_csv_id(df, path):
+    """ Cria csv dos equipamentos e seus ids
+    """
+
+    df.to_csv(path + "/UUIDS_final.csv")
+    print("Arquivo UUIDS_final.csv criado com sucesso!")
 
 def escreve_lista(nome, lista):
     arquivo_saida = open(nome + ".txt", "w")
@@ -45,7 +53,9 @@ def monta_inteiro_from_bytes(string):
         while tamanho < 9:
             string = string + "\x00"
             tamanho = len(string) + 1
-    stringb = string.encode()
+    # stringb = string.encode('latin-1')
+    stringb = string.encode('latin')
+    # stringb = string.encode()
     # tx = b'\x00\x12\x04\x00\x00\x00\x00\x00'
     return struct.unpack('<Q', stringb)[0]
 

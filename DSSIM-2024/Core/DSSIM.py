@@ -15,6 +15,7 @@ from decimal import ROUND_UP
 import socket
 # import pandas as pd
 import ctypes
+from statistics import variance
 import time
 import datetime
 import pandas as pd
@@ -349,7 +350,7 @@ class DSSim:
 
             step_pu = (maxtap - mintap) / num_taps
 
-            step = (taps_array[winding-1] - 1.0) / step_pu
+            step = (taps_array[winding-1] - 1.0) / step_pu + (num_taps / 2 + 1)
 
         return taps_array[winding-1], int(round(step))   # int(-1.0) estava retornando 0 (int) ao invés de -1 (int)
 
@@ -527,6 +528,9 @@ class DSSim:
             # nome_opendss = self.frame_buses.loc[(self.frame_buses["Id Sinap"] == id_equipamento), ["Nome Completo"]].values[0][0]
         return nome_opendss
 
+    def get_frame_csv_final(self):
+        self.frame_guids = pd.read_csv(self.data_path + "/" + "UUIDS_final.csv", engine='python')
+
     def get_last_simulation_type(self):    # Testa!!
         """ Método que identifica se o último tipo de simulação realizado pelo DSSim é do tipo Fluxo ou Curto.
         A lógica será a seguinte: se houver um elemento fault na rede, será do tipo Curto. Caso contrário, tipo Fluxo.
@@ -535,7 +539,8 @@ class DSSim:
         Export GUIDS. Se um elemento da classe "Fault" for identificado e se a sua propriedade "enabled" for "true",
         o resultado será "Curto", caso contrário, será "Fluxo"."""
 
-        self.armazena_nomes_elementos()
+        # self.armazena_nomes_elementos()
+        self.get_frame_csv_final()
         try:
 
             nome_falta = self.frame_guids.loc[(self.frame_guids["Tipo Elemento"] == "Fault"), ["Nome OpenDSS"]]["Nome OpenDSS"].tolist()
@@ -554,7 +559,7 @@ class DSSim:
             # print("Fluxo")
             return "Fluxo"
 
-    def varia_tap(self, transformer_name, variacao_tap):
+    def varia_tap(self, transformer_name, tap):
         """ Método que recebe o nome de um trafo e uma variacao de tap e varia o tap do respectivo trafo"""
 
         # O tap no OpenDSS é especificado em pu. Por isso, precisamos converter para pu.
@@ -562,6 +567,8 @@ class DSSim:
         maxtap = float(self.send_dss_command("? " + transformer_name + ".maxtap"))
         mintap = float(self.send_dss_command("? " + transformer_name + ".mintap"))
         num_taps = float(self.send_dss_command("? " + transformer_name + ".numtaps"))
+        tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
+
 
         step_pu = (maxtap - mintap) / num_taps
 
@@ -578,10 +585,11 @@ class DSSim:
             wdg = 2
 
         self.send_dss_command(transformer_name + ".wdg=" + str(wdg))
-        tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
+        novo_tap = mintap + (tap - 1) * step_pu
 
-        # Calcula novo tap em pu
-        novo_tap = float(tap_atual) + variacao_tap*step_pu
+        # Verifica se tap está nos extremos (mínimo ou máximo)
+        if novo_tap > maxtap or novo_tap < mintap:
+            return "OK"
 
         # Seta novo tap
         self.send_dss_command(transformer_name + ".tap=" + str(novo_tap))
@@ -742,8 +750,10 @@ class DSSim:
         Usaremos este método para armazenar os nomes de todos os
         elementos em um dataframe somente uma vez
         """
+
         self.send_dss_command("export uuids")  #* substituição guids → uuids
         # self.send_dss_command("export guids")     # Verificar pq não está retornando o endereço do arquivo exportado
+
         casename = self.send_dss_command("get casename").decode() #> casename = circuit
         nomes = ["Completo"]
         self.frame_guids = pd.read_csv(self.data_path + "/" + casename + "_EXP_UUIDS.CSV", engine='python', names=nomes)
@@ -753,14 +763,16 @@ class DSSim:
         self.frame_guids["Nome OpenDSS"] = self.frame_guids["Nome Completo"].str.split('.').str.get(1)
         self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"]
         self.frame_guids["Id Sinap"] = self.frame_guids.index
-        # self.frame_guids["Codigo Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(0)
-        # self.frame_guids["Id Sinap"] = self.frame_guids["Nome OpenDSS"].str.split('_id').str.get(1)
-        print('self.frame_guids:\n', self.frame_guids.to_markdown())
-        # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
-        # self.frame_guids.to_csv(output_path)
+
+        #! print tabela
+        # print('self.frame_guids:\n', self.frame_guids.to_markdown())
+        print(self.frame_guids.head().to_markdown())
         self.frame_guids.drop("Completo", axis=1, inplace=True)
 
-        # print(self.frame_guids.head())
+        cria_csv_id(self.frame_guids, self.data_path)
+
+        # output_path = 'C:/DSSIM-SmartGridLab-master/resultados'
+        # self.frame_guids.to_csv(output_path)
 
     def armazena_nomes_barras(self):
         """Exporta arquivos coordenadas
@@ -803,6 +815,10 @@ class DSSim:
         #! timedelta espera int
         tempo_atual = str(datetime.timedelta(seconds=tempo_atual_sec))  # datetime
 
+        # Se o tempo for negativo, ajustamos a string
+        if 'day' in tempo_atual:
+            tempo_atual = tempo_atual.split(", ")[-1]  # Pega apenas a parte 'hh:mm:ss'
+
         #! current_time é uma lista de int
         self.current_time[0] = float(tempo_atual.split(":")[0])
         self.current_time[1] = float(tempo_atual.split(":")[1])
@@ -810,7 +826,7 @@ class DSSim:
 
         specified_time = float(hora)*3600.0 + float(minuto)*60.0 + float(segundo)
 
-        # print("Tempo Atual: " + tempo_atual + "       Tempo Especificado: " + hora + ":" + minuto + ":" + segundo)
+        print("Tempo Atual: " + tempo_atual + "       Tempo Especificado: " + hora + ":" + minuto + ":" + segundo)
 
         if self.time_step is None and tempo_atual_sec != specified_time:  # Na primeira simulação de todas
             # print("Simular - Fluxo Inicial")
@@ -825,39 +841,44 @@ class DSSim:
     def solve_time(self, hora, minuto, segundo):
         """Método que comanda a simulação de um novo fluxo de potência no OpenDSS-G."""
 
-        tempo_hora = float(hora) + float(minuto) / 60.0 + float(segundo) / 3600.0
+        try:
+            tempo_hora = float(hora) + float(minuto) / 60.0 + float(segundo) / 3600.0
 
-        if self.is_first_simulation:
+            if self.is_first_simulation:
 
-            self.initial_time_step = 0.1
-            # necessário definir o modo de simulação e passo de tempo
-            self.send_dss_command("set mode=daily")
-            self.send_dss_command("set controlmode=static")
-            self.send_dss_command("set number=1")
+                self.initial_time_step = 0.1
+                # necessário definir o modo de simulação e passo de tempo
+                self.send_dss_command("set mode=daily")
+                self.send_dss_command("set controlmode=static")
+                self.send_dss_command("set number=1")
 
-            self.send_dss_command("set stepsize=" + str(self.initial_time_step))  # na primeira solução, um stepsize bem baixo só para o relógio do OpenDSS-G não avançar muito.
-            self.send_dss_command("set hour=" + str(tempo_hora))  # seta o tempo para o horário definido no inócio da simulação.
-            self.is_first_simulation = False
-        else:
-            if self.time_step is None:  # se ainda não foi definido
-                self.time_step = (float(hora)-self.current_time[0])*3600.0 + (float(minuto)-self.current_time[1])*60.0 + (float(segundo) - self.current_time[2]) \
-                                 + self.initial_time_step  # Passo de tempo do Módulo Central em segundos
-                self.send_dss_command("set stepsize=" + str(self.time_step))
-                self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
-                self.send_dss_command("set sec=" + str(float(minuto)*60.0 + float(segundo)))
-
-                # Uma vez definido, não precisamos alterar o time_step (pois todos os eventos cadastrados no Módulo Central acontecem em instantes de tempo
-                # múltiplos do passo de tempo
-
+                self.send_dss_command("set stepsize=" + str(self.initial_time_step))  # na primeira solução, um stepsize bem baixo só para o relógio do OpenDSS-G não avançar muito.
+                self.send_dss_command("set hour=" + str(tempo_hora))  # seta o tempo para o horário definido no inócio da simulação.
+                self.is_first_simulation = False
             else:
-                # Checar se corresponde a uma nova simulação. Isto é, se o tempo especificado é menor que o atual.
-                tempo_seg = float(hora) * 3600.0 + float(minuto) * 60.0 + float(segundo)
-                # tempo_atual_sec = float(self.get_simulation_time('s'))
-                tempo_atual_sec = self.get_simulation_time('s')
-                if tempo_seg < (tempo_atual_sec - self.time_step):
+                if self.time_step is None:  # se ainda não foi definido
+                    self.time_step = (float(hora)-self.current_time[0])*3600.0 + (float(minuto)-self.current_time[1])*60.0 + (float(segundo) - self.current_time[2]) \
+                                    + self.initial_time_step  # Passo de tempo do Módulo Central em segundos
+                    self.send_dss_command("set stepsize=" + str(self.time_step))
                     self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
-                    self.send_dss_command("set sec=" + str(float(minuto) * 60.0 + float(segundo)))
+                    self.send_dss_command("set sec=" + str(float(minuto)*60.0 + float(segundo)))
 
-        self.step_in()
+                    # Uma vez definido, não precisamos alterar o time_step (pois todos os eventos cadastrados no Módulo Central acontecem em instantes de tempo
+                    # múltiplos do passo de tempo
 
-        # self.send_dss_command("Solve")
+                else:
+                    # Checar se corresponde a uma nova simulação. Isto é, se o tempo especificado é menor que o atual.
+                    tempo_seg = float(hora) * 3600.0 + float(minuto) * 60.0 + float(segundo)
+                    # tempo_atual_sec = float(self.get_simulation_time('s'))
+                    tempo_atual_sec = self.get_simulation_time('s')
+                    if tempo_seg < (tempo_atual_sec - self.time_step):
+                        self.send_dss_command("set hour=" + str(hora))  # seta o tempo para o horário recebido
+                        self.send_dss_command("set sec=" + str(float(minuto) * 60.0 + float(segundo)))
+
+            self.step_in()
+
+            # self.send_dss_command("Solve")
+
+        except Exception as e:
+            print(f'Erro ({e}).')
+            raise e
