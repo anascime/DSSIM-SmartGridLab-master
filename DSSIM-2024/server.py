@@ -1,11 +1,13 @@
 # -*- coding: UTF-8 -*-
-import sys
-import socket
-import struct
 import datetime
+import logging
 import threading
 import time
+import socket
+import struct
+import sys
 from numpy import true_divide
+from concurrent.futures import ThreadPoolExecutor
 
 #from network import identified_nodes
 # import thread
@@ -18,13 +20,29 @@ from Tools.error_messages import ErrorMessages
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
-BUFFER_SIZE = 8192  # Qual valor utilizar aqui?
+BUFFER_SIZE_DSSIM = 8192  # Qual valor utilizar aqui?
 
-
-dssim_obj = DSSIM.DSSim(TCP_IP, TCP_PORT, BUFFER_SIZE, None)    #> teste
+dssim_obj = DSSIM.DSSim(TCP_IP, TCP_PORT, BUFFER_SIZE_DSSIM, None)    #> teste
 dssim_obj.connect()
 dssim_obj.armazena_path()
 dssim_obj.armazena_nomes_elementos()
+
+
+# Configurações globais (Constantes em MAIÚSCULO)
+HOST = ''
+PORT = 1024
+BUFFER_SIZE = 1024
+MAX_WORKERS = 50  # Limite máximo de clientes simultâneos
+
+# Configuração de Logs
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout) # Exibe no terminal
+        # logging.FileHandler("server.log") # Salva em arquivo
+    ]
+)
 
 def process_data(msg):
         """Processa mensagens entre MC e DSSim e retorna string
@@ -1343,61 +1361,51 @@ def reconstroi_msg(data):
     else:
         return u"Função não identificada, mensagem não pôde ser reconstruída!"
 
-try:
-    '''
-        #* Passar uma string VAZIA significa que o servidor também pode ouvir conexões de entrada de outros computadores.
-        #> Se fosse passado 127.0.0.1, então ele ouviria apenas as chamadas feitas dentro do PC local.
-    '''
-    HOST = ''  # localhost
-    # reserve uma PORT neste PC
-    PORT = 1024
+def handle_client(client_socket: socket.socket, client_address: tuple) -> None:
+    """Gerencia a comunicação com um cliente específico."""
+    logging.info(f"Conexão estabelecida com {client_address}")
 
-    s = socket.socket() # cria objeto socket
-    print('Socket criado com sucesso')
-
-    s.bind((HOST, PORT))
-    print('socket escutando em %s' %(PORT))
-
-    s.listen(5) # põe socket em modo escuta
-    print ('socket está escutando')
-
-    # MC = coreMC.MC
-
-    def main(c,numOfThread):
+    # O 'with' garante o fechamento do socket do cliente ao terminar
+    with client_socket:
         while True:
             try:
-                data = c.recv(1024)  # lê blocos de até 1024 bytes por vez
-                rcvdData = data.decode('latin-1')
-                pass
-            except ConnectionAbortedError as e:
-                print(f"Uma conexão estabelecida foi anulada pelo software no computador host (Erro: {e})")
+                data = client_socket.recv(BUFFER_SIZE)
+                if not data:
+                    logging.info(f"Cliente {client_address} desconectou voluntariamente.")
+                    break
+
+                rcvd_data = data.decode('latin-1')
+                decodifica_mensagem(client_socket, rcvd_data)
+
+            except ConnectionAbortedError:
+                logging.warning(f"Conexão abortada pelo cliente {client_address}.")
+                break
             except Exception as e:
-                raise e
-            else:
-                pass
+                logging.error(f"Erro inesperado no cliente {client_address}: {e}")
+                break
 
-            decodifica_mensagem(c, rcvdData)
-            if(rcvdData == ''):
-                c.close()
-            pass
+def start_server() -> None:
+    """Inicializa e roda o servidor TCP."""
+    # O 'with' principal garante que a porta será liberada se o servidor cair
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    while True:
-        c, addr = s.accept()
-        print('Conexão estabelecida com', addr)
-        print("\n")
+        try:
+            server_socket.bind((HOST, PORT))
+            server_socket.listen()
+            logging.info(f"Servidor rodando e aguardando conexões na porta {PORT}...")
 
-        t1 = threading.Thread(target=main, args=(c,1,))
-        t1.start()
-        t1.join()
+            # Gerenciador de fila de threads (Pool)
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                while True:
+                    client_socket, client_address = server_socket.accept()
+                    # Passa o cliente para o pool processar assim que houver vaga
+                    executor.submit(handle_client, client_socket, client_address)
 
-        s.close()
+        except KeyboardInterrupt:
+            logging.info("Servidor interrompido via teclado (Ctrl+C). Desligando...")
+        except Exception as e:
+            logging.critical(f"Erro crítico no loop do servidor: {e}")
 
-except KeyboardInterrupt:
-    print(f'Fechando a conexão e liberando a porta {PORT}.')
-    c.close()
-    sys.exit()
-
-except Exception as e:
-    print(f'Fechando a conexão por erro ({e}) e liberando a porta {PORT}.')
-    c.close()
-    sys.exit()
+if __name__ == '__main__':
+    start_server()
