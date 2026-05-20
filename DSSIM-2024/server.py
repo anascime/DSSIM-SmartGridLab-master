@@ -514,16 +514,16 @@ def process_data(msg):
                         powers_total = dssim_obj.get_total_powers(nome_opendss, 1)  # salva array com registros
 
 
-                        # #! Emulador de carga 2.0 soma
-                        # em_carga = True
-                        # if em_carga:
-                        #     for i, val in enumerate(voltages):
-                        #         print('voltages[i]: ', voltages[i])
-                        #         if i == 1:
-                        #             voltages[i]=val+2.0
-                        #         if i == 2:
-                        #             voltages[i]=val+2.0
-                        #         print('voltages[i]: ', voltages[i])
+                        #! Emulador de carga 2.0 soma
+                        em_carga = True
+                        if em_carga:
+                            for i, val in enumerate(voltages):
+                                print('voltages[i]: ', voltages[i])
+                                if i == 1:
+                                    voltages[i]=val+2.0
+                                if i == 2:
+                                    voltages[i]=val+2.0
+                                print('voltages[i]: ', voltages[i])
 
                         va = struct.pack('<f', voltages[0])[0:4]
                         va_angle = struct.pack('<f', voltages[1])[0:4]
