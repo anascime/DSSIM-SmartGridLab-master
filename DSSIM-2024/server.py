@@ -18,6 +18,12 @@ from Tools.test_tools import *
 import Core.DSSIM as DSSIM
 from Tools.error_messages import ErrorMessages
 
+logger = logging.getLogger(__name__)
+
+logger.debug("This is a debug message.") # will be dropped due to `console` handler level
+logger.info("Application starting up with configuration from YAML.")
+logger.warning("This is a warning.")
+
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
 BUFFER_SIZE_DSSIM = 8192  # Qual valor utilizar aqui?
