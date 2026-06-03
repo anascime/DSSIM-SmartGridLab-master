@@ -10,12 +10,14 @@ formatters:
       asctime: time
   simple:
     format: "%(asctime)s - %(levelname)s:%(name)s:%(message)s"
+  cSimple:
+    format: "%(asctime)s [%(levelname)s] %(message)s"
 
 handlers:
   console:
     class: logging.StreamHandler
     level: DEBUG
-    formatter: simple
+    formatter: cSimple
     stream: ext://sys.stdout
   tester:
     class: logging.StreamHandler
@@ -30,6 +32,15 @@ handlers:
     interval: 1
     backupCount: 5
     encoding: utf8
+  logT:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: DEBUG
+    formatter: simple
+    filename: logs/tap.log
+    when: midnight
+    interval: 1
+    backupCount: 5
+    encoding: utf8
 
 loggers:
   "":
@@ -40,8 +51,8 @@ loggers:
     level: DEBUG
     handlers: [console]
     propagate: no
-  my_app:
-    handlers: [console]
+  logTap:
+    handlers: [console, log]
     level: DEBUG
     propagate: False
 
