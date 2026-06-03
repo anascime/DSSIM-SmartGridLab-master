@@ -17,12 +17,15 @@ import App.Fontes.Auxiliar as aux
 from Tools.test_tools import *
 import Core.DSSIM as DSSIM
 from Tools.error_messages import ErrorMessages
+import logging
+import logging.config
+import yaml
 
-logger = logging.getLogger(__name__)
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f.read())
+    logging.config.dictConfig(config)
 
-logger.debug("This is a debug message.") # will be dropped due to `console` handler level
-logger.info("Application starting up with configuration from YAML.")
-logger.warning("This is a warning.")
+logger = logging.getLogger('logTap')
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
@@ -42,7 +45,7 @@ MAX_WORKERS = 50  # Limite máximo de clientes simultâneos
 
 # Configuração de Logs
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout) # Exibe no terminal
@@ -363,6 +366,7 @@ def process_data(msg):
                         voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                         voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
+                        logger.debug(f"equip: {nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap1 = {tap1}, step1 = {step1}, tap2 = {tap2}, step2 = {step2}")
 
                         va1 = struct.pack('<f', voltages_1[0])[0:4]
                         va1_angle = struct.pack('<f', voltages_1[1])[0:4]
@@ -826,6 +830,7 @@ def process_data(msg):
                 #     variacao_tap = tap
 
                 print('tapMC: ', tap)
+                logger.debug('tap MC: ', tap)
 
 
                 nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
@@ -985,7 +990,7 @@ def decodifica_mensagem(conn, data):
                 # conn.sendall(resposta)
                 try:
                     # print(resposta)
-                    print("\nlatin-1:\t", resposta.encode('latin-1'))
+                    # print("\nlatin-1:\t", resposta.encode('latin-1'))
                     # print("\nutf-8:\t\t", resposta.encode('utf-8'))
                     resp = resposta.encode('latin-1')
                     conn.send(resp)

@@ -18,11 +18,15 @@ import ctypes
 from statistics import variance
 import time
 import datetime
+from venv import logger
 import pandas as pd
 
 with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
     pass
 from App.Fontes.Auxiliar import *
+import logging
+import logging.config
+import yaml
 
 
 class DSSim:
@@ -37,6 +41,11 @@ class DSSim:
 
     def __init__(self, TCP_IP, TCP_PORT, BUFFER_SIZE, Form):
         """Cria um novo objeto DSSIM"""
+        with open("config.yaml", "r") as f:
+            config = yaml.safe_load(f.read())
+            logging.config.dictConfig(config)
+
+        self.logger = logging.getLogger('logTap')
 
         self.TCP_IP = TCP_IP                                    # IP do Servidor criado pelo DSSIM
         self.TCP_PORT = TCP_PORT                                # Porta onde o servidor se encontra
@@ -96,7 +105,6 @@ class DSSim:
 
         if unidade == 'pu':
             message = "03;"
-
         elif unidade == 'kV':
             message = "04;"    # Não entendi o que está acontecendo aqui
 
@@ -568,7 +576,7 @@ class DSSim:
         mintap = float(self.send_dss_command("? " + transformer_name + ".mintap"))
         num_taps = float(self.send_dss_command("? " + transformer_name + ".numtaps"))
         tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
-
+        logger.debug('tap atual: ', tap_atual)
 
         step_pu = (maxtap - mintap) / num_taps
 
