@@ -23,9 +23,29 @@ import yaml
 
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f.read())
-    logging.config.dictConfig(config)
+    logging.config.dictConfig(config['logging'])
 
-logger = logging.getLogger('logTap')
+logger = logging.getLogger('server')
+equipment_logger = logging.getLogger('server.equipment')
+
+EQUIPMENT_TYPE_LABELS = {
+    "1": "barra",
+    "2": "trecho",
+    "3": "chave",
+    "4": "transformador",
+    "5": "regulador",
+    "6": "capacitor_serie",
+    "7": "capacitor",
+    "8": "gerador",
+    "9": "suprimento",
+    "10": "carga",
+    "11": "filtro",
+    "12": "reator",
+}
+
+
+def equipamento_rotulo(tipo_equipamento):
+    return EQUIPMENT_TYPE_LABELS.get(str(tipo_equipamento), f"tipo_{tipo_equipamento}")
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 6345
@@ -43,16 +63,6 @@ PORT = 1024
 BUFFER_SIZE = 1024
 MAX_WORKERS = 50  # Limite máximo de clientes simultâneos
 
-# Configuração de Logs
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout) # Exibe no terminal
-        # logging.FileHandler("server.log") # Salva em arquivo
-    ]
-)
-
 def process_data(msg):
         """Processa mensagens entre MC e DSSim e retorna string
 
@@ -67,14 +77,14 @@ def process_data(msg):
         # parece que a mensagem é bem menor, mas isso é porque vários "chars" enviados
         # pelo C++ são nulos, o que vira um char "", que na hora do print, não aparece.
 
-        print(msg)
+        logger.debug("raw MC message: %s", msg)
         message = reconstroi_msg(msg)
         # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.REC, message + "\n\n")
-        print(message)
+        logger.debug("reconstructed MC message: %s", message)
 
         msg_dividida = message.split(";")
         funcao = msg_dividida[0]
-        print('funcao: ', funcao)
+        logger.debug("function=%s", funcao)
 
         # dssim_obj = 2    #> dssim_obj=None para teste
         #! verificar se esses "is not", funcionam e/ou fazem sentido
@@ -82,11 +92,10 @@ def process_data(msg):
             if funcao == "99":  # Retorna ID do equipamento por meio de código
                 codigo_equipamento = msg_dividida[-2]
                 tipo_equipamento = msg_dividida[-3]
-                print('codigo_equipamento: ', codigo_equipamento)
-                print('tipo_equipamento: ', tipo_equipamento)
+                equipment_logger.info("func=99 tipo=%s codigo=%s", tipo_equipamento, codigo_equipamento)
 
                 id_equipamento = dssim_obj.retorna_id(codigo_equipamento, tipo_equipamento)  # int
-                print('id_equipamento: ', id_equipamento)
+                equipment_logger.info("func=99 id=%s tipo=%s codigo=%s", id_equipamento, tipo_equipamento, codigo_equipamento)
 
                 qtde_bytes = 43   # Usando o mesmo valor definido no C++ builder quando a função 99 é enviada para o Simulador.
                 msg_retornada = [chr(0)]*qtde_bytes
@@ -117,6 +126,7 @@ def process_data(msg):
                 # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
 
                 str_retorno = "".join(str(x) for x in msg_retornada)
+                equipment_logger.debug("func=99 response_size=%s id=%s", qtde_bytes, id_equipamento)
 
                 # return "".join(str(x) for x in msg_retornada)
                 return str_retorno
@@ -139,9 +149,14 @@ def process_data(msg):
                         tipo_equipamento = msg_dividida[i]
                         id_equipamento = msg_dividida[i+1]
 
-                        print('Equipamento\nTipo: {}\tid: {}'.format(tipo_equipamento, id_equipamento))
-                        # print(tipo_equipamento)
-                        # print(id_equipamento)
+                        equipment_logger.info(
+                            "func=1 request equipamento=%s id=%s hora=%s:%s:%s",
+                            equipamento_rotulo(tipo_equipamento),
+                            id_equipamento,
+                            hora,
+                            minuto,
+                            segundo,
+                        )
 
                         count = count + 1
                         lista_equipamentos.append((tipo_equipamento, id_equipamento))
@@ -190,7 +205,7 @@ def process_data(msg):
                     equipamento = []
 
                     if i == 1:
-                        print("oi")
+                        equipment_logger.debug("processing equipment batch size=%s", len(lista_equipamentos))
                     equipamento.append(chr(int(tipo_equipamento)))  # Tipo
 
                     id_equip_bytes = struct.pack('<Q', int(id_equipamento))[0:4]  # Id
@@ -199,6 +214,7 @@ def process_data(msg):
                     if tipo_equipamento == "1":  # Barra
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento, "barra")
                         voltages = dssim_obj.get_bus_voltages(nome_opendss)  # salva array com registros
+                        equipment_logger.debug("func=1 barra id=%s nome=%s voltages=%s", id_equipamento, nome_opendss, voltages)
 
                         va = voltages[0]
                         va_angle = voltages[1]
@@ -222,6 +238,7 @@ def process_data(msg):
 
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
+                        equipment_logger.debug("func=1 trecho id=%s nome=%s currents=%s", id_equipamento, nome_opendss, currents)
 
                         ia = currents[0]
                         ia_angle = currents[1]
@@ -252,6 +269,18 @@ def process_data(msg):
                         power_phase_a = dssim_obj.get_phase_powers(nome_opendss, 1, 1)  #* Cuidado aqui, precisamos verificar as fases disponíveis antes...
                         power_phase_b = dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = dssim_obj.get_phase_powers(nome_opendss, 1, 3)
+                        equipment_logger.debug(
+                            "func=1 chave id=%s nome=%s currents=%s voltages_1=%s voltages_2=%s powers_total=%s phase_powers=%s/%s/%s",
+                            id_equipamento,
+                            nome_opendss,
+                            currents,
+                            voltages_1,
+                            voltages_2,
+                            powers_total,
+                            power_phase_a,
+                            power_phase_b,
+                            power_phase_c,
+                        )
 
                         va1 = struct.pack('<f', voltages_1[0])[0:4]
                         va1_angle = struct.pack('<f', voltages_1[1])[0:4]
@@ -351,6 +380,7 @@ def process_data(msg):
 
                     elif tipo_equipamento == "4" or tipo_equipamento == "5":  # Transformador ou Regulador de Tensão
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
+                        tipo_rotulo = equipamento_rotulo(tipo_equipamento)
 
                         if nome_opendss.split('.')[0].lower() != "transformer":
                             raise ValueError(f"\nid: {id_equipamento}\n\
@@ -367,6 +397,19 @@ def process_data(msg):
                         voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
                         logger.debug(f"equip: {nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap1 = {tap1}, step1 = {step1}, tap2 = {tap2}, step2 = {step2}")
+                        equipment_logger.debug(
+                            "func=1 equipamento=%s id=%s nome=%s tap1=%s step1=%s tap2=%s step2=%s voltages_t1=%s voltages_t2=%s currents=%s",
+                            tipo_rotulo,
+                            id_equipamento,
+                            nome_opendss,
+                            tap1,
+                            step1,
+                            tap2,
+                            step2,
+                            voltages_1,
+                            voltages_2,
+                            currents,
+                        )
 
                         va1 = struct.pack('<f', voltages_1[0])[0:4]
                         va1_angle = struct.pack('<f', voltages_1[1])[0:4]
@@ -483,6 +526,7 @@ def process_data(msg):
 
                     elif tipo_equipamento == "6":  # Capacitor Série
                         form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
+                        equipment_logger.warning("func=1 equipamento=capacitor_serie id=%s ainda nao implementado", id_equipamento)
                         return None
 
                     elif tipo_equipamento == "7":  # Capacitor
@@ -510,16 +554,18 @@ def process_data(msg):
                         equipamento.append(vn.decode('latin-1'))  # Módulo Neutro - Terminal 1
                         equipamento.append(vn_angle.decode('latin-1'))  # Ângulo Neutro - Terminal 1
 
-                        kvar = struct.pack('<f', dssim_obj.get_capacitor_kvar(nome_opendss))[0:4]
+                        kvar_value = dssim_obj.get_capacitor_kvar(nome_opendss)
+                        kvar = struct.pack('<f', kvar_value)[0:4]
                         equipamento.append(kvar.decode('latin-1'))  # Potência Reativa kvar
 
 
                         estado = dssim_obj.get_capacitor_state(nome_opendss)  # Estado do capacitor
-                        print('estado: ', estado)
+                        equipment_logger.debug("func=1 equipamento=capacitor id=%s nome=%s voltages=%s kvar=%s estado=%s", id_equipamento, nome_opendss, voltages, kvar_value, estado)
                         equipamento.append(chr(estado))
 
                     elif tipo_equipamento == "8":  # Gerador
                         # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
+                        equipment_logger.warning("func=1 equipamento=gerador id=%s ainda nao implementado", id_equipamento)
                         return None
 
                     elif tipo_equipamento == "9" or tipo_equipamento == "10":  # Suprimento ou Carga
@@ -632,6 +678,17 @@ def process_data(msg):
                             p_3f = powers_total[0]/1000.0
                             q_3f = powers_total[1]/1000.0
 
+                        equipment_logger.debug(
+                            "func=1 equipamento=%s id=%s nome=%s tensoes=%s correntes=%s p_q=(%s, %s)",
+                            equipamento_rotulo(tipo_equipamento),
+                            id_equipamento,
+                            nome_opendss,
+                            voltages,
+                            currents,
+                            p_3f,
+                            q_3f,
+                        )
+
                         equipamento.append((struct.pack('<f', p_3f)[0:4]).decode('latin-1'))  # Potência Ativa Trifásica, sentido saindo do suprimento
                         equipamento.append((struct.pack('<f', q_3f)[0:4]).decode('latin-1'))  # Potência Reativa Trifásica, sentido saindo do suprimento
                         # equipamento.append(struct.pack('<f', p_3f)[0:4])  # Potência Ativa Trifásica, sentido saindo do suprimento
@@ -639,6 +696,7 @@ def process_data(msg):
 
                     elif tipo_equipamento == "11":  # Filtro
                         form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
+                        equipment_logger.warning("func=1 equipamento=filtro id=%s ainda nao implementado", id_equipamento)
                         return None
                     elif tipo_equipamento == "12":  # Reator
 
@@ -690,6 +748,14 @@ def process_data(msg):
                         q_3f = powers_total[1]/1000.0
 
                         equipamento.append(struct.pack('<f', q_3f)[0:4])  # Potência Reativa Trifásica, sentido saindo do suprimento
+                        equipment_logger.debug(
+                            "func=1 equipamento=reator id=%s nome=%s tensoes=%s correntes=%s q_3f=%s",
+                            id_equipamento,
+                            nome_opendss,
+                            voltages,
+                            currents,
+                            q_3f,
+                        )
 
                     else:
                         # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro não identificado. Tipo de Equipamento " + tipo_equipamento + " não identificado!" + "\n\n")
@@ -829,12 +895,13 @@ def process_data(msg):
                 # else:
                 #     variacao_tap = tap
 
-                print('tapMC: ', tap)
-                logger.debug('tap MC: ', tap)
+                logger.debug('tap MC: %s', tap)
+                equipment_logger.info("func=%s equipamento=%s id=%s tap=%s", funcao, equipamento_rotulo(tipo_equipamento), id_equipamento, tap)
 
 
                 nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = dssim_obj.varia_tap(nome_opendss, tap)
+                equipment_logger.info("func=%s transformador id=%s nome=%s tap=%s resposta=%s", funcao, id_equipamento, nome_opendss, tap, resposta)
 
                 if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
@@ -911,6 +978,7 @@ def process_data(msg):
 
                 nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = dssim_obj.set_capacitor_state(nome_opendss, int(novo_estado))
+                equipment_logger.info("func=11 capacitor id=%s nome=%s estado=%s resposta=%s", id_equipamento, nome_opendss, novo_estado, resposta)
 
                 if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)

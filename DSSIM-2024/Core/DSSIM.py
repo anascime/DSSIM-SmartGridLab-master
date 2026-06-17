@@ -18,7 +18,6 @@ import ctypes
 from statistics import variance
 import time
 import datetime
-from venv import logger
 import pandas as pd
 
 with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
@@ -43,9 +42,10 @@ class DSSim:
         """Cria um novo objeto DSSIM"""
         with open("config.yaml", "r") as f:
             config = yaml.safe_load(f.read())
-            logging.config.dictConfig(config)
+            logging.config.dictConfig(config['logging'])
 
-        self.logger = logging.getLogger('logTap')
+        self.logger = logging.getLogger('Core.DSSIM')
+        self.equipment_logger = logging.getLogger('Core.DSSIM.equipment')
 
         self.TCP_IP = TCP_IP                                    # IP do Servidor criado pelo DSSIM
         self.TCP_PORT = TCP_PORT                                # Porta onde o servidor se encontra
@@ -159,6 +159,8 @@ class DSSim:
         voltages = voltages.split(b",")
         voltages = [float(x) for x in voltages]  # Converte para Float
 
+        self.equipment_logger.debug("tipo=barra bus=%s voltages=%s", bus_name, voltages)
+
         return voltages
 
     def get_elem_voltages(self, element_name, terminal):
@@ -177,6 +179,8 @@ class DSSim:
         # Sempre temos que retornar 4 valores de tensão de fase para o Módulo Central.
         while len(voltages) < 9:
             voltages.append(float(0.0))  # Enviar zero nas outras fases
+
+        self.equipment_logger.debug("element=%s terminal=%s voltages=%s", element_name, terminal, voltages)
 
         return voltages
 
@@ -203,6 +207,8 @@ class DSSim:
         # Sempre temos que retornar 4 valores de corrente de fase para o Módulo Central.
         while len(currents) < 9:
             currents.append(float(0.0))  # Enviar zero nas outras fases
+
+        self.equipment_logger.debug("tipo=%s element=%s currents=%s", tipoequip, element_name, currents)
 
         return currents
 
@@ -232,8 +238,7 @@ class DSSim:
 
 
         # lista = [i.split(".", 1) for i in lista]
-        print(lista)
-        print(lista_2)
+        self.equipment_logger.debug("switch=%s parsed=%s", switch_name, lista_2)
         # print(str(lista))
 
         if switch_name in lista_2:
@@ -301,12 +306,15 @@ class DSSim:
             #     q_total_2 = powers[int(2 * i + 1 + n_phases * 2)] + q_total_2
 
         if terminal == 1:
+            self.equipment_logger.debug("tipo=%s element=%s terminal=%s powers=(%s, %s)", classe_elemento, element_name, terminal, p_total_1, q_total_1)
             return p_total_1, q_total_1
 
         elif terminal == 2:
+            self.equipment_logger.debug("tipo=%s element=%s terminal=%s powers=(%s, %s)", classe_elemento, element_name, terminal, p_total_2, q_total_2)
             return p_total_2, q_total_2
 
         elif terminal is None:
+            self.equipment_logger.debug("tipo=%s element=%s powers=(%s, %s, %s, %s)", classe_elemento, element_name, p_total_1, q_total_1, p_total_2, q_total_2)
             return p_total_1, q_total_1, p_total_2, q_total_2
 
     def get_phase_powers(self, element_name, terminal, phase):
@@ -576,7 +584,7 @@ class DSSim:
         mintap = float(self.send_dss_command("? " + transformer_name + ".mintap"))
         num_taps = float(self.send_dss_command("? " + transformer_name + ".numtaps"))
         tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
-        logger.debug('tap atual: ', tap_atual)
+        self.logger.debug('tap atual: %s', tap_atual)
 
         step_pu = (maxtap - mintap) / num_taps
 
