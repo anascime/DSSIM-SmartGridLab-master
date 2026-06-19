@@ -148,6 +148,7 @@ def process_data(msg):
                 fnames = "out/names_nodes"
                 arquivo = "out/voltages_pu"
                 os.makedirs(os.path.dirname(arquivo), exist_ok=True)
+                os.makedirs(os.path.dirname(fnames), exist_ok=True)
                 # b = dssim_obj.get_all_nodes_voltages('pu')
                 b = dssim_obj.get_all_nodes_voltages('pu')
                 c = dssim_obj.get_all_name_nodes()

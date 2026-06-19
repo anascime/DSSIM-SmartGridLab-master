@@ -17,10 +17,9 @@ def cria_csv_id(df, path):
     print("Arquivo UUIDS_final.csv criado com sucesso!")
 
 def escreve_lista(nome, lista):
-    arquivo_saida = open(nome + ".txt", "w")
-    for x in lista:
-        arquivo_saida.write(str(x) + "\n")
-
+    with open(nome + ".txt", "w") as f:
+        for x in lista:
+            f.write(str(x) + "\n")
     return 1
 
 
