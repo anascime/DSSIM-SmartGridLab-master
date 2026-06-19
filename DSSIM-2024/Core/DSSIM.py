@@ -119,6 +119,7 @@ class DSSim:
 
         tamanho = int(data[:8], 16) + 8
 
+        data = data.replace(b",", b".")  # substitui vírgula por ponto dos bytes para evitar problemas de conversão para float
         lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
         lista = [float(x) for x in lista]   # Converte para Float
 

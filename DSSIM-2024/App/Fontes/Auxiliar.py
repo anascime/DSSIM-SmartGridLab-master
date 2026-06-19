@@ -25,11 +25,11 @@ def escreve_lista(nome, lista):
 
 
 def escreve_lista_par(nome, lista):
-    arquivo_saida = open(nome + ".txt", "w")
-    i = 0
-    while i < len(lista):
-        arquivo_saida.write(str(lista[i]) + "\t" + str(lista[i+1]) + "\n")
-        i = i + 2
+    with open(nome + ".csv", "w") as f:
+        i = 0
+        while i < len(lista):
+            f.write(str(lista[i]) + "\t" + str(lista[i+1]) + "\n")
+            i = i + 2
     return 1
 
 
