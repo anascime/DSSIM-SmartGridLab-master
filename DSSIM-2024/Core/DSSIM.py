@@ -103,7 +103,7 @@ class DSSim:
             "kV": retorna uma lista com a magnitude e a fase da tensão em todos os nós em kV, no formato retangular
         """
 
-        message = "43;"    # Não entendi o que está acontecendo aqui
+        message = "42;"    # Não entendi o que está acontecendo aqui
 
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
@@ -114,10 +114,10 @@ class DSSim:
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
 
-        tamanho = int(data[:8], 16) + 8
+        tamanho = int(data[:5], 16) + 8
 
         # data = data.replace(b",", b".")  # substitui vírgula por ponto dos bytes para evitar problemas de conversão para float
-        lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
+        lista = data[5:tamanho].split(b"\t")        # Separação utilizada é um tab
         lista = [str(x) for x in lista]   # Converte para Float
 
         return lista
@@ -659,7 +659,7 @@ class DSSim:
 
         data = self.s.recv(self.BUFFER_SIZE)
         if self.form is not None:
-            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + "\n\n")
         tamanho = int(data[:8], 16) + 8
 
         data_r = data[8:tamanho]

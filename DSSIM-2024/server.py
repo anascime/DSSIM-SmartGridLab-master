@@ -145,15 +145,15 @@ def process_data(msg):
                     dssim_obj.solve_time(hora, minuto, segundo)
 
                 #! Teste de pegar tensões
-                fnames = "out/names_nodes"
                 arquivo = "out/voltages_pu"
                 os.makedirs(os.path.dirname(arquivo), exist_ok=True)
-                os.makedirs(os.path.dirname(fnames), exist_ok=True)
-                # b = dssim_obj.get_all_nodes_voltages('pu')
                 b = dssim_obj.get_all_nodes_voltages('pu')
-                c = dssim_obj.get_all_name_nodes()
                 aux.escreve_lista(arquivo, b)
+                fnames = "out/names_nodes"
+                os.makedirs(os.path.dirname(fnames), exist_ok=True)
+                c = dssim_obj.get_all_name_nodes()
                 aux.escreve_lista(fnames, c)
+                # b = dssim_obj.get_all_nodes_voltages('pu')
                 # aux.escreve_lista_par(arquivo2, b)
 
                 count = 0
@@ -400,6 +400,10 @@ def process_data(msg):
                             raise ValueError(f"\nid: {id_equipamento}\n\
                                              Equipamento {nome_opendss} não é um Transformer ou RegControl")
 
+                        voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
+                        voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
+                        currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
+
                         try:
                             tap1, step1 = dssim_obj.get_transformer_tap(nome_opendss, 1)
                             tap2, step2 = dssim_obj.get_transformer_tap(nome_opendss, 2)
@@ -407,9 +411,6 @@ def process_data(msg):
                         except ValueError as e:
                             raise e
 
-                        voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
-                        voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
-                        currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
                         logger.debug(f"equip: {nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap1 = {tap1}, step1 = {step1}, tap2 = {tap2}, step2 = {step2}")
                         equipment_logger.debug(f"{nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap1 = {tap1}, step1 = {step1}, tap2 = {tap2}, step2 = {step2}")
                         equipment_logger.debug(f"{nome_opendss} - Va = {round(voltages_1[0] * math.sqrt(3))}, Vb = {round(voltages_1[2] * math.sqrt(3))} Vc = {round(voltages_1[4] * math.sqrt(3))}")

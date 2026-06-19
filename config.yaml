@@ -3,7 +3,9 @@ logging:
   disable_existing_loggers: False
   formatters:
     detailed:
-      format: "%(asctime)s - %(levelname)s - %(name)s - %(module)s:%(lineno)d - %(message)s"
+      format: "%(asctime)s - %(levelname)-8s - %(name)-22s - %(module)s:%(lineno)d - %(message)s"
+    equipinfo:
+      format: "%(asctime)s - %(module)-8s %(message)s"
     compact:
       format: "%(levelname)s:%(name)s:%(message)s"
   handlers:
@@ -24,8 +26,17 @@ logging:
     equipment_log:
       class: logging.handlers.TimedRotatingFileHandler
       level: DEBUG
-      formatter: detailed
+      formatter: equipinfo
       filename: logs/equipment.log
+      when: midnight
+      interval: 1
+      backupCount: 10
+      encoding: utf-8
+    all_log:
+      class: logging.handlers.TimedRotatingFileHandler
+      level: DEBUG
+      formatter: detailed
+      filename: logs/all.log
       when: midnight
       interval: 1
       backupCount: 10
@@ -41,11 +52,11 @@ logging:
       propagate: False
     server.equipment:
       level: DEBUG
-      handlers: [equipment_log]
+      handlers: [equipment_log, all_log]
       propagate: False
     Core.DSSIM.equipment:
       level: DEBUG
-      handlers: [equipment_log]
+      handlers: [equipment_log, all_log]
       propagate: False
   root:
     handlers: [console, log]
