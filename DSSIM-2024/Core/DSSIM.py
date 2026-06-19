@@ -95,6 +95,33 @@ class DSSim:
         elif unidade == 'd':
             return float(data[8:tamanho])
 
+    def get_all_name_nodes(self):
+        """Método que retorna lista de floats (tensão em todos os nós do circuito)
+
+        Opções unidade:
+            "pu": retorna uma lista com a magnitude da tensão em todos os nós em pu
+            "kV": retorna uma lista com a magnitude e a fase da tensão em todos os nós em kV, no formato retangular
+        """
+
+        message = "43;"    # Não entendi o que está acontecendo aqui
+
+        if self.form is not None:
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
+        self.s.send(message.encode())
+
+        data = self.s.recv(self.BUFFER_SIZE)
+        # print(data)
+        if self.form is not None:
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
+
+        tamanho = int(data[:8], 16) + 8
+
+        # data = data.replace(b",", b".")  # substitui vírgula por ponto dos bytes para evitar problemas de conversão para float
+        lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
+        lista = [str(x) for x in lista]   # Converte para Float
+
+        return lista
+
     def get_all_nodes_voltages(self, unidade):
         """Método que retorna lista de floats (tensão em todos os nós do circuito)
 

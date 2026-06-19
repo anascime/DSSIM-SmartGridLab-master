@@ -145,12 +145,14 @@ def process_data(msg):
                     dssim_obj.solve_time(hora, minuto, segundo)
 
                 #! Teste de pegar tensões
-                arquivo2 = "out/voltages_pu_par"
+                fnames = "out/names_nodes"
                 arquivo = "out/voltages_pu"
                 os.makedirs(os.path.dirname(arquivo), exist_ok=True)
                 # b = dssim_obj.get_all_nodes_voltages('pu')
                 b = dssim_obj.get_all_nodes_voltages('pu')
+                c = dssim_obj.get_all_name_nodes()
                 aux.escreve_lista(arquivo, b)
+                aux.escreve_lista(fnames, c)
                 # aux.escreve_lista_par(arquivo2, b)
 
                 count = 0
