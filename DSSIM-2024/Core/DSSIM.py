@@ -62,6 +62,23 @@ class DSSim:
         self.current_time = [0]*3                                # Armazena o último instante de tempo
         self.time_step = None                                    # Armazena o passo de tempo de simulação definido no Módulo Central
 
+    def _recv_exact(self, n):
+        data = b''
+        while len(data) < n:
+            chunk = self.s.recv(n - len(data))
+            if not chunk:
+                raise ConnectionError("socket fechou enquanto lia a resposta do servidor")
+            data += chunk
+        return data
+
+    def _recv_response(self, header_len=8):
+        header = self._recv_exact(header_len)
+        total_length = int(header, 16) + header_len + 1
+        if total_length > header_len:
+            body = self._recv_exact(total_length - header_len)
+            return header + body
+        return header
+
     #--------------------------------------------------------------------# #
     # ─── Métodos Do Tipo Get ──────────────────────────────────────────────
     #--------------------------------------------------------------------# #
@@ -103,24 +120,28 @@ class DSSim:
             "kV": retorna uma lista com a magnitude e a fase da tensão em todos os nós em kV, no formato retangular
         """
 
-        message = "42;"    # Não entendi o que está acontecendo aqui
+        message = "43;"    # Não entendi o que está acontecendo aqui
 
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
-        self.s.send(message.encode())
+        self.s.sendall(message.encode())
 
-        data = self.s.recv(self.BUFFER_SIZE)
+        data = self._recv_response(8)
         # print(data)
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
+        tamanho = int(data[:8], 16) + 8
 
-        tamanho = int(data[:5], 16) + 8
+        # data = data.strip()
+        lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
+        # lista = list(filter(None, lista))  # Remove elementos vazios da lista
+        self.logger.debug("get_all_name_nodes: received %d nodes", len(lista))
 
         # data = data.replace(b",", b".")  # substitui vírgula por ponto dos bytes para evitar problemas de conversão para float
-        lista = data[5:tamanho].split(b"\t")        # Separação utilizada é um tab
-        lista = [str(x) for x in lista]   # Converte para Float
+        # lista_str = [str(x) for x in lista]   # Converte para string
+        lista_dec = [x.decode('utf-8').strip() for x in lista]   # Converte para string
 
-        return lista
+        return lista_dec
 
     def get_all_nodes_voltages(self, unidade):
         """Método que retorna lista de floats (tensão em todos os nós do circuito)
@@ -131,15 +152,15 @@ class DSSim:
         """
 
         if unidade == 'pu':
-            message = "03;"
+            message = "03;"  # Solicita as tensões dos nós (p.u.)
         elif unidade == 'kV':
-            message = "04;"    # Não entendi o que está acontecendo aqui
+            message = "04;"  # Solicita as tensões dos nós (kV, retangular)
 
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
-        self.s.send(message.encode())
+        self.s.sendall(message.encode())
 
-        data = self.s.recv(self.BUFFER_SIZE)
+        data = self._recv_response(8)
         # print(data)
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
@@ -262,8 +283,6 @@ class DSSim:
             if i != "0" and i != "1":
                 i = i.split(".", 1)[1]
             lista_2.append(i)
-
-
 
         # lista = [i.split(".", 1) for i in lista]
         self.equipment_logger.debug("switch=%s parsed=%s", switch_name, lista_2)
@@ -665,6 +684,7 @@ class DSSim:
         data_r = data[8:tamanho]
 
         return data_r
+
 
     def refresh_gui(self, tipo):
         """Método que atualiza a GUI do DSSim"""

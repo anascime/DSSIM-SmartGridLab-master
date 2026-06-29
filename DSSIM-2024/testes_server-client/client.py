@@ -14,14 +14,15 @@ try:
     s.connect((HOST, PORT))
 
     while True:
-        str = input('S: ')
-        s.send(str.encode())
+        # str = input('')
+        str = b'\x01\x15\x00\x12\x00\x00\x05\x08I\x00\x00\x05\x07I\x00\x00\x05(H\x00\x00'
+        s.send(str)  # send message
 
         if str.lower() == 'bye':
             break
 
         # receive data from the server and decoding to get the string.
-        print (s.recv(1024).decode())
+        # print (s.recv(1024).decode())
     # close the connection
     s.close()
 

@@ -7,6 +7,43 @@ Unidade com funções auxiliares.
 __author__ = 'CelsoRocha' and 'Paulo Radatz'
 import struct
 import pandas
+import os
+
+def quebra_linha_simbolo(simbolo, caractere_linha="═"):
+    try:
+        # Obtém a largura atual do terminal
+        largura = os.get_terminal_size().columns
+    except OSError:
+        largura = 80 # Fallback padrão
+
+    # Garante espaço para o símbolo com espaçamento
+    centro = f"  {simbolo}  "
+    l_char = caractere_linha
+    # Calcula o tamanho de cada lado da linha
+    # Se a linha contiver espaço (como a de pontos), o cálculo muda ligeiramente
+    vagas_lado = (largura - len(centro)) // 2
+
+    if len(l_char) > 1: # Caso do "· "
+        repeticoes = vagas_lado // len(l_char)
+        lado = (l_char * repeticoes).strip()
+    else:
+        lado = l_char * vagas_lado
+
+    linha = f"{lado}{centro}{lado}"
+    print(linha.center(largura))
+
+    # # Ajusta em 1 caractere se a largura for ímpar
+    # if len(linha) < largura:
+    #     linha += caractere_linha
+
+    # print(linha)
+
+# Exemplos de uso:
+# quebra_linha_simbolo("❖", "═")
+# quebra_linha_simbolo("✦", "─")
+# quebra_linha_simbolo("⭐", "=")
+# quebra_linha_simbolo("⭐", "〰")
+# quebra_linha_simbolo("SUCCESS", "━")
 
 
 def cria_csv_id(df, path):
@@ -27,7 +64,7 @@ def escreve_lista_par(nome, lista):
     with open(nome + ".csv", "w") as f:
         i = 0
         while i < len(lista):
-            f.write(str(lista[i]) + "\t" + str(lista[i+1]) + "\n")
+            f.write(str(lista[i]) + ";" + str(lista[i+1]) + "\n")
             i = i + 2
     return 1
 

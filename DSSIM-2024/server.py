@@ -8,6 +8,7 @@ import time
 import socket
 import struct
 import sys
+import pandas as pd
 from numpy import true_divide
 from concurrent.futures import ThreadPoolExecutor
 
@@ -16,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 # import Core.MC as coreMC
 # import Core.DSSIM as DSSIMmas essixi
 import App.Fontes.Auxiliar as aux
+qls = aux.quebra_linha_simbolo
 from Tools.test_tools import *
 import Core.DSSIM as DSSIM
 from Tools.error_messages import ErrorMessages
@@ -145,14 +147,23 @@ def process_data(msg):
                     dssim_obj.solve_time(hora, minuto, segundo)
 
                 #! Teste de pegar tensões
-                arquivo = "out/voltages_pu"
-                os.makedirs(os.path.dirname(arquivo), exist_ok=True)
-                b = dssim_obj.get_all_nodes_voltages('pu')
-                aux.escreve_lista(arquivo, b)
                 fnames = "out/names_nodes"
                 os.makedirs(os.path.dirname(fnames), exist_ok=True)
                 c = dssim_obj.get_all_name_nodes()
-                aux.escreve_lista(fnames, c)
+                # aux.escreve_lista(fnames, c)
+
+                arquivo = "out/voltages_pu"
+                os.makedirs(os.path.dirname(arquivo), exist_ok=True)
+                b = dssim_obj.get_all_nodes_voltages('pu')
+                # aux.escreve_lista(arquivo, b)
+                data = pd.DataFrame({'Bus': c, 'Voltage': b})
+                data[['Bus', 'Node']] = data['Bus'].str.split('.', expand=True)
+                data.insert(0, 'Number', 0)
+                data = data[['Number', 'Bus', 'Node', 'Voltage']]
+                #TODO 1 arquivo por timestamp de todas as barras
+                data.to_csv("out/nodes_voltages_pu.csv", index=False)
+
+                #todo 1 arq por simulação - barras monitoradas: timestamp; barra; nó; tensao_pu;
                 # b = dssim_obj.get_all_nodes_voltages('pu')
                 # aux.escreve_lista_par(arquivo2, b)
 
@@ -1102,8 +1113,8 @@ def decodifica_mensagem(conn, data):
         else:  # Mensagem recebida está incompleta
             decodificar_dados_recebidos = False
 
+        qls("✦", "─")
 
-        print(u'\u2500' * 10, end='\n\n')
 
 def reconstroi_msg(data):
     """Função que reconstrói uma mensagem recebida do Módulo Central"""
