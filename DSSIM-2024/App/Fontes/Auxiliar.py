@@ -8,6 +8,7 @@ __author__ = 'CelsoRocha' and 'Paulo Radatz'
 import struct
 import pandas
 import os
+from typing import List, Dict, Tuple
 
 def quebra_linha_simbolo(simbolo, caractere_linha="═"):
     try:
@@ -52,6 +53,44 @@ def cria_csv_id(df, path):
 
     df.to_csv(path + "/UUIDS_final.csv")
     print("Arquivo UUIDS_final.csv criado com sucesso!")
+
+def to_list(x):
+    if x is None:
+        return []
+    if isinstance(x, list):
+        return x
+    return [x]
+
+def build_tasks_from_config(config: Dict) -> Tuple[List[str], List[str], List[str]]:
+    feeders = to_list(config.get("feeder", []))
+    months = to_list(config.get("month", []))
+    type_days = to_list(config.get("type_day", []))
+    # num_patamares = config["num_patamares"]
+    # patamar_ini = config["patamar_ini"]
+    # patamar_fim = config["patamar_fim"]
+
+    # tasks: List[Task] = []
+    list_med_A = []
+    list_med_B = []
+    list_med_C = []
+
+    for feeder in feeders:
+        pontos_med_faseA = config["points"][f"{feeder[0:8]}"]["Node1"]
+        pontos_med_faseB = config["points"][f"{feeder[0:8]}"]["Node2"]
+        pontos_med_faseC = config["points"][f"{feeder[0:8]}"]["Node3"]
+        # reguladores = config["points"][f"{feeder[0:8]}"]["Reguladores"]
+        # alteracao_barra_fonte = config["points"][f"{feeder[0:8]}"]["source_change"]["bus_source_change"]
+        # alteracao_hora = config["points"][f"{feeder[0:8]}"]["source_change"]["hour_change"]
+        # alteracao_segundo = config["points"][f"{feeder[0:8]}"]["source_change"]["second_change"]
+        # reguladores_tap_neutro = config["points"][f"{feeder[0:8]}"]["source_change"]["reg_tap_neutro"]
+
+        for m in months:
+            for td in type_days:
+                list_med_A.extend(pontos_med_faseA)
+                list_med_B.extend(pontos_med_faseB)
+                list_med_C.extend(pontos_med_faseC)
+
+    return list_med_A, list_med_B, list_med_C
 
 def escreve_lista(nome, lista):
     with open(nome + ".txt", "w") as f:

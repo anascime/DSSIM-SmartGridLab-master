@@ -678,7 +678,7 @@ class DSSim:
 
         data = self.s.recv(self.BUFFER_SIZE)
         if self.form is not None:
-            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + "\n\n")
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
         tamanho = int(data[:8], 16) + 8
 
         data_r = data[8:tamanho]
