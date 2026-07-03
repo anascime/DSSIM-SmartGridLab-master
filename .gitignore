@@ -41,8 +41,9 @@ venv**/
 *.Dsp
 *.dss
 UUIDS*.csv
-logs/dssim.log**
+logs/dssim**.log**
 logs/tap.log**
 logs/equipment.log**
 logs/all.log**
 out/
+logsEnerq/
