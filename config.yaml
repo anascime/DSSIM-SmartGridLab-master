@@ -1,0 +1,67 @@
+logging:
+  version: 1
+  disable_existing_loggers: False
+  formatters:
+    detailed:
+      format: "%(asctime)s - %(levelname)-8s - %(name)-22s - %(module)s:%(lineno)d - %(message)s"
+    dssiminfo:
+      format: "%(asctime)s - %(levelname)-8s - %(name)-12s - %(module)s:%(lineno)d - %(message)s"
+    equipinfo:
+      format: "%(asctime)s - %(module)-8s %(message)s"
+    monitor:
+      format: "%(asctime)s - %(message)s"
+    compact:
+      format: "%(message)s"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: compact
+      stream: ext://sys.stdout
+    log:
+      class: logging.handlers.TimedRotatingFileHandler
+      level: INFO
+      formatter: dssiminfo
+      filename: logs/dssim.log
+      when: midnight
+      interval: 1
+      backupCount: 10
+      encoding: utf-8
+    equipment_log:
+      class: logging.handlers.TimedRotatingFileHandler
+      level: INFO
+      formatter: equipinfo
+      filename: logs/equipment.log
+      when: midnight
+      interval: 1
+      backupCount: 10
+      encoding: utf-8
+    all_log:
+      class: logging.handlers.TimedRotatingFileHandler
+      level: INFO
+      formatter: detailed
+      filename: logs/all.log
+      when: midnight
+      interval: 1
+      backupCount: 10
+      encoding: utf-8
+  loggers:
+    server:
+      level: INFO
+      handlers: [console, log]
+      propagate: False
+    Core.DSSIM:
+      level: INFO
+      handlers: [console, log]
+      propagate: False
+    server.equipment:
+      level: INFO
+      handlers: [equipment_log, all_log]
+      propagate: False
+    Core.DSSIM.equipment:
+      level: INFO
+      handlers: [equipment_log, all_log]
+      propagate: False
+  root:
+    handlers: [console, log]
+    level: INFO
