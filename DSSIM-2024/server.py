@@ -294,7 +294,7 @@ def process_data(msg):
                         power_phase_a = dssim_obj.get_phase_powers(nome_opendss, 1, 1)  #* Cuidado aqui, precisamos verificar as fases disponíveis antes...
                         power_phase_b = dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = dssim_obj.get_phase_powers(nome_opendss, 1, 3)
-                        logger.debug(
+                        logger.info(
                             "func=1 chave id=%s nome=%s correntes=%s tensões_1=%s tensões_2=%s potência_total=%s potências_fases=%s/%s/%s",
                             id_equipamento,
                             nome_opendss,
@@ -422,9 +422,9 @@ def process_data(msg):
                         except ValueError as e:
                             raise e
 
-                        logger.info(f"{nome_opendss} - Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap1 = {tap1}, step1 = {step1}, tap2 = {tap2}, step2 = {step2}")
+                        logger.info(f"{nome_opendss} - Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2}")
                         logger.info(f"{nome_opendss} - Va={round(voltages_1[0] * math.sqrt(3), 2)} ∠{voltages_1[1]}, Vb={round(voltages_1[2] * math.sqrt(3), 2)} ∠{voltages_1[3]}, Vc={round(voltages_1[4] * math.sqrt(3), 2)} ∠{voltages_1[5]}")
-                        equipment_logger.info(f"{nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap1 = {tap1}, step1 = {step1}, tap2 = {tap2}, step2 = {step2}")
+                        equipment_logger.info(f"{nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap2 = {tap2}, step2 = {step2}")
                         equipment_logger.info(f"{nome_opendss} - Va = {round(voltages_1[0] * math.sqrt(3), 2)}, Vb = {round(voltages_1[2] * math.sqrt(3), 2)} Vc = {round(voltages_1[4] * math.sqrt(3), 2)}")
                         # equipment_logger.debug(
                         #     "func=1 equipamento=%s id=%s nome=%s tap1=%s step1=%s tap2=%s step2=%s voltages_t1=%s voltages_t2=%s currents=%s",
@@ -610,15 +610,19 @@ def process_data(msg):
 
 
                         # #! Emulador de carga 2.0 soma
-                        # em_carga = True
-                        # if em_carga:
-                        #     for i, val in enumerate(voltages):
-                        #         print('voltages[i]: ', voltages[i])
-                        #         if i == 1:
-                        #             voltages[i]=val+2.0
-                        #         if i == 2:
-                        #             voltages[i]=val+2.0
-                        #         print('voltages[i]: ', voltages[i])
+                        em_carga = True
+                        if em_carga:
+                            for i, val in enumerate(voltages):
+                                if i == 2:
+                                    print(f'vb: ', voltages[i])
+                                    voltages[i]=val+1.6
+                                    print(f'vb: ', voltages[i])
+                                if i == 4:
+                                    print(f'vc: ', voltages[i])
+                                    voltages[i]=val+1.8
+                                    print(f'vc: ', voltages[i])
+
+                        logger.info(f"{nome_opendss} - Va={voltages[0]} ∠{voltages[1]}, Vb={voltages[2]} ∠{voltages[3]}, Vc={voltages[4]} ∠{voltages[5]}")
 
                         va = struct.pack('<f', voltages[0])[0:4]
                         va_angle = struct.pack('<f', voltages[1])[0:4]
@@ -707,8 +711,8 @@ def process_data(msg):
                             p_3f = powers_total[0]/1000.0
                             q_3f = powers_total[1]/1000.0
 
-                        equipment_logger.debug(
-                            "func=1 equip=%s id=%s nome=%s tensoes=%s correntes=%s p_q=(%s, %s)",
+                        equipment_logger.info(
+                            "%s id=%s nome=%s tensoes=%s correntes=%s p_q=(%s, %s)",
                             equipamento_rotulo(tipo_equipamento),
                             id_equipamento,
                             nome_opendss,
