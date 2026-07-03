@@ -416,13 +416,13 @@ def process_data(msg):
                         currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
 
                         try:
-                            tap1, step1 = dssim_obj.get_transformer_tap(nome_opendss, 1)
-                            tap2, step2 = dssim_obj.get_transformer_tap(nome_opendss, 2)
+                            tap1, step1, step1_display = dssim_obj.get_transformer_tap(nome_opendss, 1)
+                            tap2, step2, step2_display = dssim_obj.get_transformer_tap(nome_opendss, 2)
                             pass
                         except ValueError as e:
                             raise e
 
-                        logger.info(f"{nome_opendss} - Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2}")
+                        logger.info(f"{nome_opendss} - Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2_display}")
                         logger.info(f"{nome_opendss} - Va={round(voltages_1[0] * math.sqrt(3), 2)} ∠{voltages_1[1]}, Vb={round(voltages_1[2] * math.sqrt(3), 2)} ∠{voltages_1[3]}, Vc={round(voltages_1[4] * math.sqrt(3), 2)} ∠{voltages_1[5]}")
                         equipment_logger.info(f"{nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap2 = {tap2}, step2 = {step2}")
                         equipment_logger.info(f"{nome_opendss} - Va = {round(voltages_1[0] * math.sqrt(3), 2)}, Vb = {round(voltages_1[2] * math.sqrt(3), 2)} Vc = {round(voltages_1[4] * math.sqrt(3), 2)}")

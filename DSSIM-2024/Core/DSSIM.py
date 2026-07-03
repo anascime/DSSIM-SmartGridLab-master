@@ -414,8 +414,9 @@ class DSSim:
             step_pu = (maxtap - mintap) / num_taps
 
             step = (taps_array[winding-1] - 1.0) / step_pu + (num_taps / 2 + 1)
+            step_display = (taps_array[winding-1] - 1.0) / step_pu + (num_taps / 2 - 16)
 
-        return taps_array[winding-1], int(round(step))   # int(-1.0) estava retornando 0 (int) ao invés de -1 (int)
+        return taps_array[winding-1], int(round(step)), int(round(step_display))   # int(-1.0) estava retornando 0 (int) ao invés de -1 (int)
 
     def get_capacitor_state(self, capacitor_name):
         """Método que recebe o nome de um capacitor e retorna o seu estado"""
