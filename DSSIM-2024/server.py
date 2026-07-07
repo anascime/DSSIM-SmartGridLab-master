@@ -612,15 +612,61 @@ def process_data(msg):
                         # #! Emulador de carga 2.0 soma
                         em_carga = False
                         if em_carga:
-                            for i, val in enumerate(voltages):
-                                if i == 2:
-                                    print(f'vb: ', voltages[i])
-                                    voltages[i]=val+1.6
-                                    print(f'vb: ', voltages[i])
-                                if i == 4:
-                                    print(f'vc: ', voltages[i])
-                                    voltages[i]=val+1.8
-                                    print(f'vc: ', voltages[i])
+                            if nome_opendss.lower() == "load.carga_bt1":
+                                for i, val in enumerate(voltages):
+                                    if i == 0:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+0.36
+                                    if i == 2:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+1.21
+                                    if i == 4:
+                                        # print(f'vc: ', voltages[i])
+                                        voltages[i]=val+2.04
+                            if nome_opendss.lower() == "load.carga_bt2":
+                                for i, val in enumerate(voltages):
+                                    if i == 0:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val - 0.22
+                                    if i == 2:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+2.88
+                                    if i == 4:
+                                        # print(f'vc: ', voltages[i])
+                                        voltages[i]=val+1.2
+                            if nome_opendss.lower() == "load.carga_bt3":
+                                for i, val in enumerate(voltages):
+                                    if i == 0:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+2.18
+                                    if i == 2:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+1.37
+                                    if i == 4:
+                                        # print(f'vc: ', voltages[i])
+                                        voltages[i]=val+3.29
+                            if nome_opendss.lower() == "load.carga_bt4":
+                                for i, val in enumerate(voltages):
+                                    if i == 0:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+2.32
+                                    if i == 2:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+2.13
+                                    if i == 4:
+                                        # print(f'vc: ', voltages[i])
+                                        voltages[i]=val+1.94
+                            if nome_opendss.lower() == "load.carga_bt5":
+                                for i, val in enumerate(voltages):
+                                    if i == 0:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+2.96
+                                    if i == 2:
+                                        # print(f'vb: ', voltages[i])
+                                        voltages[i]=val+2.04
+                                    if i == 4:
+                                        # print(f'vc: ', voltages[i])
+                                        voltages[i]=val+1.96
 
                         logger.info(f"{nome_opendss} - Va={round(voltages[0], 2)} ∠{round(voltages[1], 2)}, Vb={round(voltages[2], 2)} ∠{round(voltages[3], 2)}, Vc={round(voltages[4], 2)} ∠{round(voltages[5], 2)}")
 
