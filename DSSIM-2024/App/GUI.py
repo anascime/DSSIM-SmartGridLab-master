@@ -51,9 +51,9 @@ class RemoteControlServerApp(ctk.CTk):
     def _center_window_to_display(self, width: int, height: int, scale_factor: float = 1.0):
         """Centers the window to the main display/monitor"""
         screen_width = self.winfo_screenwidth()
-        print('screen_width: ', screen_width)
+        # print('screen_width: ', screen_width)
         screen_height = self.winfo_screenheight()
-        print('screen_height: ', screen_height)
+        # print('screen_height: ', screen_height)
         x = int(((screen_width/2) - (width/2)) * scale_factor)
         y = int(((screen_height/2) - (height/1.5)) * scale_factor)
         return f"{width}x{height}+{x}+{y}"
@@ -136,7 +136,7 @@ class RemoteControlServerApp(ctk.CTk):
 
         self.tap_entry = ctk.CTkEntry(
             self.trafo_frame,
-            placeholder_text="Tap (1-33)...",
+            placeholder_text="Tap (-16 a 16)...",
             width=80
         )
         self.tap_entry.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 5))
@@ -194,8 +194,13 @@ class RemoteControlServerApp(ctk.CTk):
         thread.start()
 
     def enviar_tap(self):
-        """Lê o comando do campo de entrada e adiciona ao visor de conversa."""
-        trafo = self.trafo_entry.get().strip()
+        """Lê os campos de entrada e adiciona ao visor de conversa.
+
+        Keyword arguments:
+        trafo -- Nome do transformador (string)
+        tap -- Valor do tap (float) de -16 a 16, convertido para o intervalo 1 a 33 antes de enviar ao DSSIM.
+        """
+        trafo = "Transformer." + self.trafo_entry.get().strip()
         if not trafo:
             return
 
@@ -217,6 +222,15 @@ class RemoteControlServerApp(ctk.CTk):
 
     def _varia_tap(self, trafo: str, tap: float):
         """Envia o comando ao DSSIM e exibe a resposta no visor."""
+        if tap < -16 or tap > 16:
+            self.after(0, lambda: self._append_chat(f"[Erro] < Valor de tap fora do intervalo permitido (-16 a 16): {tap}"))
+            return
+
+        if not tap.is_integer():
+            self.after(0, lambda: self._append_chat(f"[Erro] < Valor de tap deve ser um número inteiro: {tap}"))
+            return
+
+        tap = tap + 17.0
         try:
             resposta = server.dssim_obj.varia_tap(trafo, tap)
             if isinstance(resposta, bytes):

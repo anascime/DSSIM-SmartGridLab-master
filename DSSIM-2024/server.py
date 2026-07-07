@@ -610,7 +610,7 @@ def process_data(msg):
 
 
                         # #! Emulador de carga 2.0 soma
-                        em_carga = True
+                        em_carga = False
                         if em_carga:
                             for i, val in enumerate(voltages):
                                 if i == 2:
@@ -622,7 +622,7 @@ def process_data(msg):
                                     voltages[i]=val+1.8
                                     print(f'vc: ', voltages[i])
 
-                        logger.info(f"{nome_opendss} - Va={voltages[0]} ∠{voltages[1]}, Vb={voltages[2]} ∠{voltages[3]}, Vc={voltages[4]} ∠{voltages[5]}")
+                        logger.info(f"{nome_opendss} - Va={round(voltages[0], 2)} ∠{round(voltages[1], 2)}, Vb={round(voltages[2], 2)} ∠{round(voltages[3], 2)}, Vc={round(voltages[4], 2)} ∠{round(voltages[5], 2)}")
 
                         va = struct.pack('<f', voltages[0])[0:4]
                         va_angle = struct.pack('<f', voltages[1])[0:4]
