@@ -43,7 +43,6 @@ class DSSim:
         with open("config.yaml", "r") as f:
             config = yaml.safe_load(f.read())
             logging.config.dictConfig(config['logging'])
-
         self.logger = logging.getLogger('Core.DSSIM')
         self.equipment_logger = logging.getLogger('Core.DSSIM.equipment')
 
@@ -328,16 +327,16 @@ class DSSim:
             n_phases = len(powers) / 2
             terminal = 1  # força leitura da potência do único terminal que tem
 
-            print('len(powers): ', len(powers))
-            print("n_phases = len(powers) / 2")
-            print(f'n_phases = {n_phases}')
+            # print('len(powers): ', len(powers))
+            # print("n_phases = len(powers) / 2")
+            # print(f'n_phases = {n_phases}')
         else:
             # n_phases = len(powers) / 4  #?????
             n_phases = len(powers) / 2
 
-            print('len(powers): ', len(powers))
-            print("n_phases = len(powers) / 2")
-            print(f'n_phases = {n_phases}')
+            # print('len(powers): ', len(powers))
+            # print("n_phases = len(powers) / 2")
+            # print(f'n_phases = {n_phases}')
 
         p_total_1 = 0
         q_total_1 = 0
