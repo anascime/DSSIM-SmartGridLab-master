@@ -74,13 +74,13 @@ def process_data(msg):
         chamando a respectiva função na comunicação com o servidor DSSim e
         enviando a devida mensagem de volta ao cliente MC
         """
-
+        global mudou_tap
         # tamanho = len(data)
         # funcao = ord(data[0])
         # O comprimento de "data" é exatamente o comprimento da mensagem. No print(data,)
         # parece que a mensagem é bem menor, mas isso é porque vários "chars" enviados
         # pelo C++ são nulos, o que vira um char "", que na hora do print, não aparece.
-
+        print(mudou_tap)
         logger.debug("mensagem bruta MC: %s", msg)
         message = reconstroi_msg(msg)
         # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.REC, message + "\n\n")
@@ -136,7 +136,9 @@ def process_data(msg):
                 return str_retorno
 
             elif funcao == "1":  # MC solicita registros de equipamentos. Devemos retornar a função 02 do protocolo.
-
+                if mudou_tap == True:
+                    mudou_tap = False
+                    return None
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
                 minuto = msg_dividida[3]
@@ -422,10 +424,28 @@ def process_data(msg):
                         except ValueError as e:
                             raise e
 
-                        logger.info(f"{nome_opendss} - Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2_display}")
-                        logger.info(f"{nome_opendss} - Va={round(voltages_1[0] * math.sqrt(3), 2)} ∠{voltages_1[1]}, Vb={round(voltages_1[2] * math.sqrt(3), 2)} ∠{voltages_1[3]}, Vc={round(voltages_1[4] * math.sqrt(3), 2)} ∠{voltages_1[5]}")
-                        equipment_logger.info(f"{nome_opendss} - Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, tap2 = {tap2}, step2 = {step2}")
-                        equipment_logger.info(f"{nome_opendss} - Va = {round(voltages_1[0] * math.sqrt(3), 2)}, Vb = {round(voltages_1[2] * math.sqrt(3), 2)} Vc = {round(voltages_1[4] * math.sqrt(3), 2)}")
+                        logger.info(f"{nome_opendss}\t t1- Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2_display}")
+                        logger.info(f"\t\t\t⤷\t t2- Va={voltages_2[0]} ∠{voltages_2[1]}, Vb={voltages_2[2]} ∠{voltages_2[3]}, Vc={voltages_2[4]} ∠{voltages_2[5]}")
+                        # logger.info(f"{nome_opendss} - Va={round(voltages_1[0] * math.sqrt(3), 2)} ∠{voltages_1[1]}, Vb={round(voltages_1[2] * math.sqrt(3), 2)} ∠{voltages_1[3]}, Vc={round(voltages_1[4] * math.sqrt(3), 2)} ∠{voltages_1[5]}")
+
+                        equipment_logger.info(
+                            "[%s:%s:%s] %s %s tap2=%s step2=%s t⒉⟬Va=%s ∠%s, Vb=%s ∠%s, Vc=%s ∠%s⟧ tap1=%s step1=%s t⒈⟬Va=%s ∠%s, Vb=%s ∠%s, Vc=%s ∠%s⟭",
+                            hora,
+                            minuto,
+                            segundo,
+                            equipamento_rotulo(tipo_equipamento),
+                            nome_opendss.split('.')[1],
+                            tap2,
+                            step2,
+                            voltages_2[0], voltages_2[1], voltages_2[2], voltages_2[3], voltages_2[4], voltages_2[5],
+                            tap1,
+                            step1,
+                            voltages_1[0], voltages_1[1], voltages_1[2], voltages_1[3], voltages_1[4], voltages_1[5]
+                        )
+
+                        # equipment_logger.info(f"tap2 = {tap2}, step2 = {step2}, {nome_opendss} t1- Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, ")
+                        # equipment_logger.info(f"tap2 = {tap2}, step2 = {step2}, {nome_opendss} t2- Va = {voltages_2[0]} {voltages_2[1]}, Vb = {voltages_2[2]} {voltages_2[3]}, Vc = {voltages_2[4]} {voltages_2[5]}, ")
+                        # equipment_logger.info(f"{nome_opendss} - Va = {round(voltages_1[0] * math.sqrt(3), 2)}, Vb = {round(voltages_1[2] * math.sqrt(3), 2)} Vc = {round(voltages_1[4] * math.sqrt(3), 2)}")
                         # equipment_logger.debug(
                         #     "func=1 equipamento=%s id=%s nome=%s tap1=%s step1=%s tap2=%s step2=%s voltages_t1=%s voltages_t2=%s currents=%s",
                         #     tipo_rotulo,
@@ -608,67 +628,94 @@ def process_data(msg):
                         currents = dssim_obj.get_elem_currents(nome_opendss)
                         powers_total = dssim_obj.get_total_powers(nome_opendss, 1)  # salva array com registros
 
+                        if tipo_equipamento == "9":  # Suprimento
+                            p_3f = powers_total[0] * -1/1000.0
+                            q_3f = powers_total[1] * -1/1000.0
+                        else:  # Carga
+                            p_3f = powers_total[0]/1000.0
+                            q_3f = powers_total[1]/1000.0
+
+                        logger.info(f"{nome_opendss} - Va={round(voltages[0], 2)} ∠{round(voltages[1], 2)}, Vb={round(voltages[2], 2)} ∠{round(voltages[3], 2)}, Vc={round(voltages[4], 2)} ∠{round(voltages[5], 2)}")
+
+                        equipment_logger.info(
+                            "[%s:%s:%s] %s %s tensoes=%s correntes=%s p_q=(%s, %s)",
+                            hora,
+                            minuto,
+                            segundo,
+                            equipamento_rotulo(tipo_equipamento),
+                            nome_opendss.split('.')[1],
+                            voltages,
+                            currents,
+                            p_3f,
+                            q_3f,
+                        )
 
                         # #! Emulador de carga 2.0 soma
-                        em_carga = False
+                        em_carga = True
                         if em_carga:
-                            if nome_opendss.lower() == "load.carga_bt1":
+                            if nome_opendss.lower() == "load.carga_bt428":## Calibracao "load.carga_bt1":
                                 for i, val in enumerate(voltages):
                                     if i == 0:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+0.36
+                                        voltages[i]=val+0.4
                                     if i == 2:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+1.21
+                                        voltages[i]=val+1.45
                                     if i == 4:
                                         # print(f'vc: ', voltages[i])
-                                        voltages[i]=val+2.04
-                            if nome_opendss.lower() == "load.carga_bt2":
+                                        voltages[i]=val+2.5
+                            if nome_opendss.lower() == "load.carga_bt429":## Calibracao "load.carga_bt2":
                                 for i, val in enumerate(voltages):
                                     if i == 0:
                                         # print(f'vb: ', voltages[i])
                                         voltages[i]=val - 0.22
                                     if i == 2:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+2.88
+                                        voltages[i]=val+2.95
                                     if i == 4:
                                         # print(f'vc: ', voltages[i])
-                                        voltages[i]=val+1.2
-                            if nome_opendss.lower() == "load.carga_bt3":
+                                        voltages[i]=val+1.8
+                            if nome_opendss.lower() == "load.pip_8277141_m1":## Calibracao "load.carga_bt3":
                                 for i, val in enumerate(voltages):
                                     if i == 0:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+2.18
+                                        voltages[i]=val+2.5
                                     if i == 2:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+1.37
+                                        voltages[i]=val+1.6
                                     if i == 4:
                                         # print(f'vc: ', voltages[i])
-                                        voltages[i]=val+3.29
-                            if nome_opendss.lower() == "load.carga_bt4":
+                                        voltages[i]=val+3.6
+                            if nome_opendss.lower() == "load.pip_8361496_m1":## Calibracao "load.carga_bt4":
                                 for i, val in enumerate(voltages):
                                     if i == 0:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+2.32
+                                        voltages[i]=val+2.5
                                     if i == 2:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+2.13
+                                        voltages[i]=val+2.8
                                     if i == 4:
                                         # print(f'vc: ', voltages[i])
-                                        voltages[i]=val+1.94
-                            if nome_opendss.lower() == "load.carga_bt5":
+                                        voltages[i]=val+2.0
+                            if nome_opendss.lower() == "load.pip_8496096_m1":## Calibracao "load.carga_bt5": # IP 252
                                 for i, val in enumerate(voltages):
                                     if i == 0:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+2.96
+                                        voltages[i]=val+3.5
                                     if i == 2:
                                         # print(f'vb: ', voltages[i])
-                                        voltages[i]=val+2.04
+                                        # voltages[i]=val+2.12
+                                        voltages[i]=0.0
+                                    if i == 3:
+                                        voltages[i]=0.0
                                     if i == 4:
                                         # print(f'vc: ', voltages[i])
-                                        voltages[i]=val+1.96
+                                        # voltages[i]=val+1.6
+                                        voltages[i]=0.0
+                                    if i == 5:
+                                        voltages[i]=0.0
 
-                        logger.info(f"{nome_opendss} - Va={round(voltages[0], 2)} ∠{round(voltages[1], 2)}, Vb={round(voltages[2], 2)} ∠{round(voltages[3], 2)}, Vc={round(voltages[4], 2)} ∠{round(voltages[5], 2)}")
+                        print(f"{nome_opendss} - Va={round(voltages[0], 2)} ∠{round(voltages[1], 2)}, Vb={round(voltages[2], 2)} ∠{round(voltages[3], 2)}, Vc={round(voltages[4], 2)} ∠{round(voltages[5], 2)}")
 
                         va = struct.pack('<f', voltages[0])[0:4]
                         va_angle = struct.pack('<f', voltages[1])[0:4]
@@ -750,23 +797,7 @@ def process_data(msg):
                         # equipamento.append(struct.pack('<f', in_)[0:4])  # Módulo Neutro
                         # equipamento.append(struct.pack('<f', in_angle)[0:4])  # Ângulo Neutro
 
-                        if tipo_equipamento == "9":  # Suprimento
-                            p_3f = powers_total[0] * -1/1000.0
-                            q_3f = powers_total[1] * -1/1000.0
-                        else:  # Carga
-                            p_3f = powers_total[0]/1000.0
-                            q_3f = powers_total[1]/1000.0
 
-                        equipment_logger.info(
-                            "%s id=%s nome=%s tensoes=%s correntes=%s p_q=(%s, %s)",
-                            equipamento_rotulo(tipo_equipamento),
-                            id_equipamento,
-                            nome_opendss,
-                            voltages,
-                            currents,
-                            p_3f,
-                            q_3f,
-                        )
 
                         equipamento.append((struct.pack('<f', p_3f)[0:4]).decode('latin-1'))  # Potência Ativa Trifásica, sentido saindo do suprimento
                         equipamento.append((struct.pack('<f', q_3f)[0:4]).decode('latin-1'))  # Potência Reativa Trifásica, sentido saindo do suprimento
@@ -975,14 +1006,17 @@ def process_data(msg):
                 #     variacao_tap = tap
 
                 logger.debug('tap MC: %s', tap)
-                equipment_logger.info("func=%s equip=%s id=%s tap=%s", funcao, equipamento_rotulo(tipo_equipamento), id_equipamento, tap)
+                # equipment_logger.info("func=%s equip=%s id=%s tap=%s", funcao, equipamento_rotulo(tipo_equipamento), id_equipamento, tap)
 
 
                 nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = dssim_obj.varia_tap(nome_opendss, tap)
-                equipment_logger.info("func=%s transformador id=%s nome=%s tap=%s resposta=%s", funcao, id_equipamento, nome_opendss, tap, resposta)
+                equipment_logger.info("%s. Mudança de Tap %s tap=%s resposta=%s", funcao, nome_opendss, tap, resposta)
 
                 if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
+                    logger.info("func=%s transformador id=%s nome=%s tap=%s resposta=%s", funcao, id_equipamento, nome_opendss, tap, resposta)
+                    mudou_tap = True
+                    print("Mudou o tap: %s", mudou_tap)
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
                     msg_retornada = func100acknowledgment(int(funcao), 0)
@@ -1533,7 +1567,9 @@ def reconstroi_msg(data):
 def handle_client(client_socket: socket.socket, client_address: tuple) -> None:
     """Gerencia a comunicação com um cliente específico."""
     logging.info(f"Conexão estabelecida com {client_address}")
-
+    global mudou_tap
+    mudou_tap = False
+    print('mudou_tap: ', mudou_tap)
     # O 'with' garante o fechamento do socket do cliente ao terminar
     with client_socket:
         while True:
