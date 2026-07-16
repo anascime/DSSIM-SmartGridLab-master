@@ -78,6 +78,7 @@ PORT = 1024
 BUFFER_SIZE = 1024
 MAX_WORKERS = 50  # Limite máximo de clientes simultâneos
 trafo_tap_alterado = [] # type: List[Transformer]  # Lista de objetos Transformer com estado persistido
+tensoes_alteradas = {}  # Dicionário para armazenar as tensões alteradas por transformador
 
 def process_data(msg):
         """Processa mensagens entre MC e DSSim e retorna string
@@ -86,7 +87,9 @@ def process_data(msg):
         chamando a respectiva função na comunicação com o servidor DSSim e
         enviando a devida mensagem de volta ao cliente MC
         """
+        global trafo_tap_alterado
         global mudou_tap
+        global tensoes_alteradas
         # tamanho = len(data)
         # funcao = ord(data[0])
         # O comprimento de "data" é exatamente o comprimento da mensagem. No print(data,)
@@ -148,9 +151,6 @@ def process_data(msg):
                 return str_retorno
 
             elif funcao == "1":  # MC solicita registros de equipamentos. Devemos retornar a função 02 do protocolo.
-                if mudou_tap == True:
-                    mudou_tap = False
-                    return None
                 qtde_bytes_rcv = msg_dividida[1]
                 hora = msg_dividida[2]
                 minuto = msg_dividida[3]
@@ -426,51 +426,76 @@ def process_data(msg):
                                              Equipamento {nome_opendss} não é um Transformer ou RegControl")
 
                         transformer_name = nome_opendss.split(".")[1] if "." in nome_opendss else nome_opendss
+                        b = dssim_obj.get_transformer_bus(nome_opendss)  # retorna o bus do transformador, que é o mesmo do regulador de tensão
+                        bus = b.split(".")[0] #type: ignore
                         tr_tap = trafo_tap_alterado[0] if trafo_tap_alterado else None
 
-                        if tr_tap is not None:
-                            node = int(split(tr_tap.bus, ".")[1]) if tr_tap.bus else 1
-                            k = 0.625
+                        if tr_tap is not None and mudou_tap == True and bus == tr_tap.bus.split(".")[0]:
+                            node = int(tr_tap.bus.split(".")[1]) if tr_tap.bus else 1
+                            k = tr_tap.fator_k
+
+                            logger.info("%s nó: %d", tr_tap.name, node)
+
+                            try:
+                                tap1, step1, step1_display = dssim_obj.get_transformer_tap(nome_opendss, 1) #type: ignore
+                                tap2, step2, step2_display = dssim_obj.get_transformer_tap(nome_opendss, 2) #type: ignore
+                                pass
+                            except ValueError as e:
+                                raise e
 
                             if tr_tap.name == transformer_name:
                                 voltages_1 = list(tr_tap.voltages_t1 or [])
                                 voltages_2 = list(tr_tap.voltages_t2 or [])  #List[float]
                                 currents = list(tr_tap.currents or [])
-                                tap1 = float(tr_tap.tap)
-                                tap2 = float(tr_tap.tap)
-                                step1 = int(round(float(tr_tap.tap)))
-                                step2 = int(round(float(tr_tap.tap)))
                             else:
                                 voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                                 voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                                 currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
 
-                                try:
-                                    tap1, step1, step1_display = dssim_obj.get_transformer_tap(nome_opendss, 1)
-                                    tap2, step2, step2_display = dssim_obj.get_transformer_tap(nome_opendss, 2)
-                                    pass
-                                except ValueError as e:
-                                    raise e
-
-                            i = (node -1) * 2
+                            i = (node - 1) * 2
                             val = voltages_2[i]
-                            voltages_2[i] = val + val*k
+                            voltages_2[i] = val + val*k # type: ignore
+                            print(f'val: {val} \tvoltages_2[{i}]: {voltages_2[i]} \tk: {k}')
 
                             logger.info("1. usando tap para recalcular tensões em %s (%s)", tipo_rotulo, nome_opendss)
+                            tensoes_alteradas[transformer_name] = {True}
+
+                            if len(tensoes_alteradas) == 3:
+                                print('tensoes_alteradas: ', tensoes_alteradas)
+                                mudou_tap = False
+                                print('mudou_tap: ', mudou_tap)
+                                tensoes_alteradas.clear()
+                                print('tensoes_alteradas limpa: ', tensoes_alteradas)
                         else:
                             voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                             voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
                             currents = dssim_obj.get_elem_currents(nome_opendss)  # salva array com registros
 
                             try:
-                                tap1, step1, step1_display = dssim_obj.get_transformer_tap(nome_opendss, 1)
-                                tap2, step2, step2_display = dssim_obj.get_transformer_tap(nome_opendss, 2)
+                                tap1, step1, step1_display = dssim_obj.get_transformer_tap(nome_opendss, 1) #type: ignore
+                                tap2, step2, step2_display = dssim_obj.get_transformer_tap(nome_opendss, 2) #type: ignore
                                 pass
                             except ValueError as e:
                                 raise e
 
-                        logger.info(f"{nome_opendss}\t t1- Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2_display}")
-                        logger.info(f"\t\t\t⤷\t t2- Va={voltages_2[0]} ∠{voltages_2[1]}, Vb={voltages_2[2]} ∠{voltages_2[3]}, Vc={voltages_2[4]} ∠{voltages_2[5]}")
+                            line_vprof = "%s;%s:%s:%s;%s;%s;%s;%s;%s;%s" % (
+                                datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
+                                hora:02d,
+                                minuto:02d,
+                                segundo:02d,
+                                transformer_name,
+                                voltages_2[0], voltages_2[2], voltages_2[4],
+                                tap2,
+                                step2,
+                            )
+
+                            arquivo = "out/00_voltages_profile.csv"
+                            os.makedirs(os.path.dirname(arquivo), exist_ok=True)
+                            with open(arquivo, "a") as f:
+                                f.write(line_vprof + "\n")
+
+                        logger.info(f"{transformer_name}\t t1- Va={voltages_1[0]} ∠{voltages_1[1]}, Vb={voltages_1[2]} ∠{voltages_1[3]}, Vc={voltages_1[4]} ∠{voltages_1[5]}, tap2 = {tap2}, step2 = {step2_display}")
+                        logger.info(f"{transformer_name}\t t2- Va={voltages_2[0]} ∠{voltages_2[1]}, Vb={voltages_2[2]} ∠{voltages_2[3]}, Vc={voltages_2[4]} ∠{voltages_2[5]}")
                         # logger.info(f"{nome_opendss} - Va={round(voltages_1[0] * math.sqrt(3), 2)} ∠{voltages_1[1]}, Vb={round(voltages_1[2] * math.sqrt(3), 2)} ∠{voltages_1[3]}, Vc={round(voltages_1[4] * math.sqrt(3), 2)} ∠{voltages_1[5]}")
 
                         equipment_logger.info(
@@ -479,7 +504,7 @@ def process_data(msg):
                             minuto,
                             segundo,
                             equipamento_rotulo(tipo_equipamento),
-                            nome_opendss.split('.')[1],
+                            transformer_name,
                             tap2,
                             step2,
                             voltages_2[0], voltages_2[1], voltages_2[2], voltages_2[3], voltages_2[4], voltages_2[5],
@@ -488,9 +513,9 @@ def process_data(msg):
                             voltages_1[0], voltages_1[1], voltages_1[2], voltages_1[3], voltages_1[4], voltages_1[5]
                         )
 
-                        # equipment_logger.info(f"tap2 = {tap2}, step2 = {step2}, {nome_opendss} t1- Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, ")
-                        # equipment_logger.info(f"tap2 = {tap2}, step2 = {step2}, {nome_opendss} t2- Va = {voltages_2[0]} {voltages_2[1]}, Vb = {voltages_2[2]} {voltages_2[3]}, Vc = {voltages_2[4]} {voltages_2[5]}, ")
-                        # equipment_logger.info(f"{nome_opendss} - Va = {round(voltages_1[0] * math.sqrt(3), 2)}, Vb = {round(voltages_1[2] * math.sqrt(3), 2)} Vc = {round(voltages_1[4] * math.sqrt(3), 2)}")
+                        # equipment_logger.info(f"tap2 = {tap2}, step2 = {step2}, {transformer_name} t1- Va = {voltages_1[0]} {voltages_1[1]}, Vb = {voltages_1[2]} {voltages_1[3]}, Vc = {voltages_1[4]} {voltages_1[5]}, ")
+                        # equipment_logger.info(f"tap2 = {tap2}, step2 = {step2}, {transformer_name} t2- Va = {voltages_2[0]} {voltages_2[1]}, Vb = {voltages_2[2]} {voltages_2[3]}, Vc = {voltages_2[4]} {voltages_2[5]}, ")
+                        # equipment_logger.info(f"{transformer_name} - Va = {round(voltages_1[0] * math.sqrt(3), 2)}, Vb = {round(voltages_1[2] * math.sqrt(3), 2)} Vc = {round(voltages_1[4] * math.sqrt(3), 2)}")
                         # equipment_logger.debug(
                         #     "func=1 equipamento=%s id=%s nome=%s tap1=%s step1=%s tap2=%s step2=%s voltages_t1=%s voltages_t2=%s currents=%s",
                         #     tipo_rotulo,
@@ -694,6 +719,20 @@ def process_data(msg):
                             p_3f,
                             q_3f,
                         )
+
+                        line_vprof = "%s;%s:%s:%s;%s;%s;%s;%s" % (
+                            datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
+                            hora:02d,
+                            minuto:02d,
+                            segundo:02d,
+                            nome_opendss.split('.')[1],
+                            voltages[0], voltages[2], voltages[4],
+                        )
+
+                        arquivo = "out/00_voltages_profile.csv"
+                        os.makedirs(os.path.dirname(arquivo), exist_ok=True)
+                        with open(arquivo, "a") as f:
+                            f.write(line_vprof + "\n")
 
                         # #! Emulador de carga 2.0 soma
                         em_carga = True
@@ -919,9 +958,12 @@ def process_data(msg):
                     lista_equipamentos_todos = lista_equipamentos_todos + equipamento  # Concatena lista
 
                 # Mensagem Display
-                msg = str(ord(msg_retornada[0])) + ";" + str(qtde_bytes) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";" + str(ord(msg_retornada[5])) + ";" + tipo_calculo + ";"   # Não mostraremos os registros dos equipamentos pq a msg pode
+                msg = str(ord(msg_retornada[0])) + ";" + str(qtde_bytes) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";" + str(ord(msg_retornada[5])) + ";" + tipo_calculo + ";"   # type: ignore # Não mostraremos os registros dos equipamentos pq a msg pode
                 # ser muito extensa
                 # form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, msg + "\n\n")
+
+                if not mudou_tap:
+                    trafo_tap_alterado = []
 
                 msg_retornada = msg_retornada + lista_equipamentos_todos
                 resposta = "".join(str(x) for x in msg_retornada)
@@ -1052,21 +1094,31 @@ def process_data(msg):
 
                 logger.debug('tap MC: %s', tap)
                 # equipment_logger.info("func=%s equip=%s id=%s tap=%s", funcao, equipamento_rotulo(tipo_equipamento), id_equipamento, tap)
-
+                k = 0.00625
 
                 nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
+                tap2_value, step2_value, _ = dssim_obj.get_transformer_tap(nome_opendss, 2)
+                print(f'tr_tap.tap: {int(tap - 17)} \tstep2: {step2_value - 17}')
+
+                if tap < step2_value:
+                    k = -1.0 * 0.00625
+                elif tap == step2_value:
+                    k = None
+
+
                 resposta = dssim_obj.varia_tap(nome_opendss, tap)
                 equipment_logger.info("%s. Mudança de Tap %s tap=%s resposta=%s", funcao, nome_opendss, tap, resposta)
 
                 if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
                     logger.info("func=%s transformador id=%s nome=%s tap=%s resposta=%s", funcao, id_equipamento, nome_opendss, tap, resposta)
                     mudou_tap = True
-                    print("Mudou o tap: %s", mudou_tap)
+                    print("Mudou o tap: ", mudou_tap)
 
                     try:
                         tap1_value, step1_value, _ = dssim_obj.get_transformer_tap(nome_opendss, 1)
                         tap2_value, step2_value, _ = dssim_obj.get_transformer_tap(nome_opendss, 2)
                         persisted_tap = tap
+
                     except Exception as exc:
                         logger.warning("func=%s não foi possível ler tap após alteração para %s: %s", funcao, nome_opendss, exc)
                         persisted_tap = float(tap)
@@ -1081,6 +1133,7 @@ def process_data(msg):
                         voltages_1 = None
                         voltages_2 = None
 
+                    trafo_tap_alterado = []  # Limpa a lista de transformadores alterados antes de adicionar o novo
                     transformer_name = nome_opendss.split(".")[1] if "." in nome_opendss else nome_opendss
                     trafo_tap_alterado.append(Transformer(
                         name=transformer_name,
@@ -1088,8 +1141,10 @@ def process_data(msg):
                         currents=list(currents) if currents is not None else None,
                         voltages_t1=list(voltages_1) if voltages_1 is not None else None,
                         voltages_t2=list(voltages_2) if voltages_2 is not None else None,
-                        bus=dssim_obj.get_transformer_bus(nome_opendss)
+                        bus=dssim_obj.get_transformer_bus(nome_opendss),
+                        fator_k=k
                     ))
+                    print('trafo_tap_alterado: ', trafo_tap_alterado)
 
                     msg_retornada = func100acknowledgment(int(funcao), 1)
                 else:
