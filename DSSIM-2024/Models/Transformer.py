@@ -20,6 +20,15 @@ class Transformer:
     # -------------------------------------------------------------------------
     name: str  # Nome do transformador. Não possui default, sendo obrigatório.
 
+    currents: Optional[List[float]] = None
+    """Correntes do equipamento capturadas em uma leitura de estado."""
+
+    voltages_t1: Optional[List[float]] = None
+    """Tensões do enrolamento primário/terminal 1 do equipamento."""
+
+    voltages_t2: Optional[List[float]] = None
+    """Tensões do enrolamento secundário/terminal 2 do equipamento."""
+
     # -------------------------------------------------------------------------
     # PROPRIEDADES GERAIS DO EQUIPAMENTO
     # -------------------------------------------------------------------------

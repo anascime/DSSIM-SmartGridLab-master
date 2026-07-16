@@ -389,6 +389,32 @@ class DSSim:
             powers_tupla = powers[6*(terminal-1) + 2*(phase-1)], powers[6*(terminal-1) + 2*(phase-1) + 1]   # P, Q
             return powers_tupla
 
+    def get_transformer_buses(self, transformer_name):
+        """Método que recebe o nome de um transformador e retorna os nomes das barras conectadas a ele"""
+
+        buses = self.send_dss_command("? " + transformer_name + ".buses")
+        buses = buses[1:-3]  # deleta [ ....  , ]
+        buses = buses.split(b",")
+        buses = [x.decode('utf-8') for x in buses]
+
+        return buses
+
+    def get_transformer_bus(self, transformer_name):
+        """Método que recebe o nome de um transformador e retorna o nome da barra conectada a ele"""
+        try:
+            bus = self.send_dss_command("? " + transformer_name + ".bus")
+            if isinstance(bus, bytes):
+                try:
+                    bus = bus.decode('utf-8', errors='replace')
+                except Exception:
+                    bus = repr(bus)
+            else:
+                bus = str(bus)
+
+            return bus
+        except Exception as exc:
+            return None
+
     def get_transformer_tap(self, transformer_name, winding):
         """Método que recebe o nome de um transformador e um enrolamento e
         retorna o tap atual desse enrolamento em pu e em passos
