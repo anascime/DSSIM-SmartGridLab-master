@@ -466,6 +466,23 @@ def process_data(msg):
                                 print('mudou_tap: ', mudou_tap)
                                 tensoes_alteradas.clear()
                                 print('tensoes_alteradas limpa: ', tensoes_alteradas)
+
+                            line_vprof = "%s;%02d:%02d:%02d;%s;%s;%s;%s;%s;%s" % (
+                                datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
+                                int(hora),
+                                int(minuto),
+                                int(segundo),
+                                transformer_name,
+                                voltages_2[0], voltages_2[2], voltages_2[4],
+                                tap2,
+                                step2,
+                            )
+
+                            arquivo = "out/00_voltages_profile.csv"
+                            os.makedirs(os.path.dirname(arquivo), exist_ok=True)
+                            with open(arquivo, "a") as f:
+                                f.write(line_vprof + "\n")
+
                         else:
                             voltages_1 = dssim_obj.get_elem_voltages(nome_opendss, 1)  # salva array com registros
                             voltages_2 = dssim_obj.get_elem_voltages(nome_opendss, 2)  # salva array com registros
@@ -478,11 +495,11 @@ def process_data(msg):
                             except ValueError as e:
                                 raise e
 
-                            line_vprof = "%s;%s:%s:%s;%s;%s;%s;%s;%s;%s" % (
+                            line_vprof = "%s;%02d:%02d:%02d;%s;%s;%s;%s;%s;%s" % (
                                 datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
-                                hora:02d,
-                                minuto:02d,
-                                segundo:02d,
+                                int(hora),
+                                int(minuto),
+                                int(segundo),
                                 transformer_name,
                                 voltages_2[0], voltages_2[2], voltages_2[4],
                                 tap2,
@@ -499,10 +516,10 @@ def process_data(msg):
                         # logger.info(f"{nome_opendss} - Va={round(voltages_1[0] * math.sqrt(3), 2)} ∠{voltages_1[1]}, Vb={round(voltages_1[2] * math.sqrt(3), 2)} ∠{voltages_1[3]}, Vc={round(voltages_1[4] * math.sqrt(3), 2)} ∠{voltages_1[5]}")
 
                         equipment_logger.info(
-                            "[%s:%s:%s] %s %s tap2=%s step2=%s t2[Va=%s ∠%s, Vb=%s ∠%s, Vc=%s ∠%s] tap1=%s step1=%s t1[Va=%s ∠%s, Vb=%s ∠%s, Vc=%s ∠%s]",
-                            hora,
-                            minuto,
-                            segundo,
+                            "[%02d:%02d:%02d] %s %s tap2=%s step2=%s t2[Va=%s ∠%s, Vb=%s ∠%s, Vc=%s ∠%s] tap1=%s step1=%s t1[Va=%s ∠%s, Vb=%s ∠%s, Vc=%s ∠%s]",
+                            int(hora),
+                            int(minuto),
+                            int(segundo),
                             equipamento_rotulo(tipo_equipamento),
                             transformer_name,
                             tap2,
@@ -708,10 +725,10 @@ def process_data(msg):
                         logger.info(f"{nome_opendss} - Va={round(voltages[0], 2)} ∠{round(voltages[1], 2)}, Vb={round(voltages[2], 2)} ∠{round(voltages[3], 2)}, Vc={round(voltages[4], 2)} ∠{round(voltages[5], 2)}")
 
                         equipment_logger.info(
-                            "[%s:%s:%s] %s %s tensoes=%s correntes=%s p_q=(%s, %s)",
-                            hora,
-                            minuto,
-                            segundo,
+                            "[%02d:%02d:%02d] %s %s tensoes=%s correntes=%s p_q=(%s, %s)",
+                            int(hora),
+                            int(minuto),
+                            int(segundo),
                             equipamento_rotulo(tipo_equipamento),
                             nome_opendss.split('.')[1],
                             voltages,
@@ -720,11 +737,11 @@ def process_data(msg):
                             q_3f,
                         )
 
-                        line_vprof = "%s;%s:%s:%s;%s;%s;%s;%s" % (
+                        line_vprof = "%s;%02d:%02d:%02d;%s;%s;%s;%s" % (
                             datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
-                            hora:02d,
-                            minuto:02d,
-                            segundo:02d,
+                            int(hora),
+                            int(minuto),
+                            int(segundo),
                             nome_opendss.split('.')[1],
                             voltages[0], voltages[2], voltages[4],
                         )
@@ -892,6 +909,7 @@ def process_data(msg):
                         form.escreve_mensagem(Conexao.MC_CON, Tipo_Conexao.ENV, "Registro do equipamento " + tipo_equipamento + " ainda não implementado!" + "\n\n")
                         logger.warning("func=1 equip=filtro id=%s ainda nao implementado", id_equipamento)
                         return None
+
                     elif tipo_equipamento == "12":  # Reator
 
                         nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
