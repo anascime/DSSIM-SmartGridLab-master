@@ -170,12 +170,12 @@ def process_data(msg):
                 # os.makedirs(os.path.dirname(arquivo), exist_ok=True)
                 b = dssim_obj.get_all_nodes_voltages('pu')
                 # aux.escreve_lista(arquivo, b)
-                data = pd.DataFrame({'Bus': c, 'Voltage': b})
-                data[['Bus', 'Node']] = data['Bus'].str.split('.', expand=True)
-                data.insert(0, 'Number', 0)
-                data = data[['Number', 'Bus', 'Node', 'Voltage']]
+                # data = pd.DataFrame({'Bus': c, 'Voltage': b})
+                # data[['Bus', 'Node']] = data['Bus'].str.split('.', expand=True)
+                # data.insert(0, 'Number', 0)
+                # data = data[['Number', 'Bus', 'Node', 'Voltage']]
                 #TODO 1 arquivo por timestamp de todas as barras
-                data.to_csv("out/nodes_voltages_pu.csv", index=False)
+                # data.to_csv("out/nodes_voltages_pu.csv", index=False)
 
                 #todo 1 arq por simulação - barras monitoradas: timestamp; barra; nó; tensao_pu;
                 # b = dssim_obj.get_all_nodes_voltages('pu')
@@ -480,9 +480,9 @@ def process_data(msg):
 
                             line_vprof = "%s;%s:%s:%s;%s;%s;%s;%s;%s;%s" % (
                                 datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
-                                hora:02d,
-                                minuto:02d,
-                                segundo:02d,
+                                hora,
+                                minuto,
+                                segundo,
                                 transformer_name,
                                 voltages_2[0], voltages_2[2], voltages_2[4],
                                 tap2,
@@ -722,9 +722,9 @@ def process_data(msg):
 
                         line_vprof = "%s;%s:%s:%s;%s;%s;%s;%s" % (
                             datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S.%f")[:-3],
-                            hora:02d,
-                            minuto:02d,
-                            segundo:02d,
+                            hora,
+                            minuto,
+                            segundo,
                             nome_opendss.split('.')[1],
                             voltages[0], voltages[2], voltages[4],
                         )
