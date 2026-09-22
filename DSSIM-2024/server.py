@@ -308,18 +308,18 @@ def process_data(msg):
                         power_phase_a = dssim_obj.get_phase_powers(nome_opendss, 1, 1)  #* Cuidado aqui, precisamos verificar as fases disponíveis antes...
                         power_phase_b = dssim_obj.get_phase_powers(nome_opendss, 1, 2)
                         power_phase_c = dssim_obj.get_phase_powers(nome_opendss, 1, 3)
-                        logger.info(
-                            "func=1 chave id=%s nome=%s correntes=%s tensões_1=%s tensões_2=%s potência_total=%s potências_fases=%s/%s/%s",
-                            id_equipamento,
-                            nome_opendss,
-                            currents,
-                            voltages_1,
-                            voltages_2,
-                            powers_total,
-                            power_phase_a,
-                            power_phase_b,
-                            power_phase_c,
-                        )
+                        # logger.info(
+                        #     "func=1 chave id=%s nome=%s correntes=%s tensões_1=%s tensões_2=%s potência_total=%s potências_fases=%s/%s/%s",
+                        #     id_equipamento,
+                        #     nome_opendss,
+                        #     currents,
+                        #     voltages_1,
+                        #     voltages_2,
+                        #     powers_total,
+                        #     power_phase_a,
+                        #     power_phase_b,
+                        #     power_phase_c,
+                        # )
 
                         va1 = struct.pack('<f', voltages_1[0])[0:4]
                         va1_angle = struct.pack('<f', voltages_1[1])[0:4]
@@ -410,6 +410,23 @@ def process_data(msg):
                         # id_barra_ref = int(barra_ref_nome.split(b"_id")[1].split(b".")[0])
                         id_barra_ref = int(dssim_obj.send_dss_command("? " + swtobj.decode() + ".bus1"))
                         id_barra_ref_Q = struct.pack('<Q', id_barra_ref)[0:4]
+
+                        # estado = dssim_obj.get_switch_state(nome_opendss.split(".")[1])
+                        estado = dssim_obj.send_dss_command("? " + nome_opendss + ".state")
+
+                        logger.info(
+                            "func=1 chave id=%s nome=%s state=%s correntes=%s tensões_1=%s tensões_2=%s potência_total=%s potências_fases=%s/%s/%s",
+                            id_equipamento,
+                            nome_opendss,
+                            estado,
+                            currents,
+                            voltages_1,
+                            voltages_2,
+                            powers_total,
+                            power_phase_a,
+                            power_phase_b,
+                            power_phase_c,
+                        )
 
                         equipamento.append(id_barra_ref_Q.decode('latin-1'))
                         # equipamento.append(struct.pack('<Q', id_barra_ref)[0])
@@ -1032,6 +1049,9 @@ def process_data(msg):
                         msg_retornada = func100acknowledgment(int(funcao), 0)
                 else:  # caso contrário, não é necessário fazer nada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
+
+                estado_novo = int(dssim_obj.get_switch_state(nome_opendss.split(".")[1])) # type: ignore
+                logger.info("func=%s chave nome=%s comando=%s estado_atual=%s estado_novo=%s", funcao, nome_opendss, comando, estado_atual, estado_novo)
 
                 # Mensagem Display
                 msg = str(ord(msg_retornada[0])) + ";" + str(ord(msg_retornada[1])) + ";" + str(ord(msg_retornada[3])) + ";" + str(ord(msg_retornada[4])) + ";"
