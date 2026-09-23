@@ -7,6 +7,44 @@ Unidade com funções auxiliares.
 __author__ = 'CelsoRocha' and 'Paulo Radatz'
 import struct
 import pandas
+import os
+from typing import List, Dict, Tuple
+
+def quebra_linha_simbolo(simbolo, caractere_linha="═"):
+    try:
+        # Obtém a largura atual do terminal
+        largura = os.get_terminal_size().columns
+    except OSError:
+        largura = 80 # Fallback padrão
+
+    # Garante espaço para o símbolo com espaçamento
+    centro = f"  {simbolo}  "
+    l_char = caractere_linha
+    # Calcula o tamanho de cada lado da linha
+    # Se a linha contiver espaço (como a de pontos), o cálculo muda ligeiramente
+    vagas_lado = (largura - len(centro)) // 2
+
+    if len(l_char) > 1: # Caso do "· "
+        repeticoes = vagas_lado // len(l_char)
+        lado = (l_char * repeticoes).strip()
+    else:
+        lado = l_char * vagas_lado
+
+    linha = f"{lado}{centro}{lado}"
+    print(linha.center(largura))
+
+    # # Ajusta em 1 caractere se a largura for ímpar
+    # if len(linha) < largura:
+    #     linha += caractere_linha
+
+    # print(linha)
+
+# Exemplos de uso:
+# quebra_linha_simbolo("❖", "═")
+# quebra_linha_simbolo("✦", "─")
+# quebra_linha_simbolo("⭐", "=")
+# quebra_linha_simbolo("⭐", "〰")
+# quebra_linha_simbolo("SUCCESS", "━")
 
 
 def cria_csv_id(df, path):
@@ -16,20 +54,57 @@ def cria_csv_id(df, path):
     df.to_csv(path + "/UUIDS_final.csv")
     print("Arquivo UUIDS_final.csv criado com sucesso!")
 
-def escreve_lista(nome, lista):
-    arquivo_saida = open(nome + ".txt", "w")
-    for x in lista:
-        arquivo_saida.write(str(x) + "\n")
+def to_list(x):
+    if x is None:
+        return []
+    if isinstance(x, list):
+        return x
+    return [x]
 
+def build_tasks_from_config(config: Dict) -> Tuple[List[str], List[str], List[str]]:
+    feeders = to_list(config.get("feeder", []))
+    months = to_list(config.get("month", []))
+    type_days = to_list(config.get("type_day", []))
+    # num_patamares = config["num_patamares"]
+    # patamar_ini = config["patamar_ini"]
+    # patamar_fim = config["patamar_fim"]
+
+    # tasks: List[Task] = []
+    list_med_A = []
+    list_med_B = []
+    list_med_C = []
+
+    for feeder in feeders:
+        pontos_med_faseA = config["points"][f"{feeder[0:8]}"]["Node1"]
+        pontos_med_faseB = config["points"][f"{feeder[0:8]}"]["Node2"]
+        pontos_med_faseC = config["points"][f"{feeder[0:8]}"]["Node3"]
+        # reguladores = config["points"][f"{feeder[0:8]}"]["Reguladores"]
+        # alteracao_barra_fonte = config["points"][f"{feeder[0:8]}"]["source_change"]["bus_source_change"]
+        # alteracao_hora = config["points"][f"{feeder[0:8]}"]["source_change"]["hour_change"]
+        # alteracao_segundo = config["points"][f"{feeder[0:8]}"]["source_change"]["second_change"]
+        # reguladores_tap_neutro = config["points"][f"{feeder[0:8]}"]["source_change"]["reg_tap_neutro"]
+
+        for m in months:
+            for td in type_days:
+                list_med_A.extend(pontos_med_faseA)
+                list_med_B.extend(pontos_med_faseB)
+                list_med_C.extend(pontos_med_faseC)
+
+    return list_med_A, list_med_B, list_med_C
+
+def escreve_lista(nome, lista):
+    with open(nome + ".txt", "w") as f:
+        for x in lista:
+            f.write(str(x) + "\n")
     return 1
 
 
 def escreve_lista_par(nome, lista):
-    arquivo_saida = open(nome + ".txt", "w")
-    i = 0
-    while i < len(lista):
-        arquivo_saida.write(str(lista[i]) + "\t" + str(lista[i+1]) + "\n")
-        i = i + 2
+    with open(nome + ".csv", "w") as f:
+        i = 0
+        while i < len(lista):
+            f.write(str(lista[i]) + ";" + str(lista[i+1]) + "\n")
+            i = i + 2
     return 1
 
 

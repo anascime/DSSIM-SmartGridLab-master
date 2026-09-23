@@ -23,6 +23,9 @@ import pandas as pd
 with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
     pass
 from App.Fontes.Auxiliar import *
+import logging
+import logging.config
+import yaml
 
 
 class DSSim:
@@ -37,6 +40,11 @@ class DSSim:
 
     def __init__(self, TCP_IP, TCP_PORT, BUFFER_SIZE, Form):
         """Cria um novo objeto DSSIM"""
+        with open("config.yaml", "r") as f:
+            config = yaml.safe_load(f.read())
+            logging.config.dictConfig(config['logging'])
+        self.logger = logging.getLogger('Core.DSSIM')
+        self.equipment_logger = logging.getLogger('Core.DSSIM.equipment')
 
         self.TCP_IP = TCP_IP                                    # IP do Servidor criado pelo DSSIM
         self.TCP_PORT = TCP_PORT                                # Porta onde o servidor se encontra
@@ -52,6 +60,23 @@ class DSSim:
         self.initial_time_step = None                            # Passo de Tempo Inicial da Simulação no OpenDSS-G
         self.current_time = [0]*3                                # Armazena o último instante de tempo
         self.time_step = None                                    # Armazena o passo de tempo de simulação definido no Módulo Central
+
+    def _recv_exact(self, n):
+        data = b''
+        while len(data) < n:
+            chunk = self.s.recv(n - len(data))
+            if not chunk:
+                raise ConnectionError("socket fechou enquanto lia a resposta do servidor")
+            data += chunk
+        return data
+
+    def _recv_response(self, header_len=8):
+        header = self._recv_exact(header_len)
+        total_length = int(header, 16) + header_len + 1
+        if total_length > header_len:
+            body = self._recv_exact(total_length - header_len)
+            return header + body
+        return header
 
     #--------------------------------------------------------------------# #
     # ─── Métodos Do Tipo Get ──────────────────────────────────────────────
@@ -86,6 +111,37 @@ class DSSim:
         elif unidade == 'd':
             return float(data[8:tamanho])
 
+    def get_all_name_nodes(self):
+        """Método que retorna lista de floats (tensão em todos os nós do circuito)
+
+        Opções unidade:
+            "pu": retorna uma lista com a magnitude da tensão em todos os nós em pu
+            "kV": retorna uma lista com a magnitude e a fase da tensão em todos os nós em kV, no formato retangular
+        """
+
+        message = "43;"    # Não entendi o que está acontecendo aqui
+
+        if self.form is not None:
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
+        self.s.sendall(message.encode())
+
+        data = self._recv_response(8)
+        # print(data)
+        if self.form is not None:
+            self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
+        tamanho = int(data[:8], 16) + 8
+
+        # data = data.strip()
+        lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
+        # lista = list(filter(None, lista))  # Remove elementos vazios da lista
+        self.logger.debug("get_all_name_nodes: received %d nodes", len(lista))
+
+        # data = data.replace(b",", b".")  # substitui vírgula por ponto dos bytes para evitar problemas de conversão para float
+        # lista_str = [str(x) for x in lista]   # Converte para string
+        lista_dec = [x.decode('utf-8').strip() for x in lista]   # Converte para string
+
+        return lista_dec
+
     def get_all_nodes_voltages(self, unidade):
         """Método que retorna lista de floats (tensão em todos os nós do circuito)
 
@@ -95,22 +151,22 @@ class DSSim:
         """
 
         if unidade == 'pu':
-            message = "03;"
-
+            message = "03;"  # Solicita as tensões dos nós (p.u.)
         elif unidade == 'kV':
-            message = "04;"    # Não entendi o que está acontecendo aqui
+            message = "04;"  # Solicita as tensões dos nós (kV, retangular)
 
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.ENV, f"{message}\n\n")
-        self.s.send(message.encode())
+        self.s.sendall(message.encode())
 
-        data = self.s.recv(self.BUFFER_SIZE)
+        data = self._recv_response(8)
         # print(data)
         if self.form is not None:
             self.form.escreve_mensagem(Conexao.DSSIM_CON, Tipo_Conexao.REC, data + b"\n\n")
 
         tamanho = int(data[:8], 16) + 8
 
+        data = data.replace(b",", b".")  # substitui vírgula por ponto dos bytes para evitar problemas de conversão para float
         lista = data[8:tamanho].split(b"\t")        # Separação utilizada é um tab
         lista = [float(x) for x in lista]   # Converte para Float
 
@@ -151,6 +207,8 @@ class DSSim:
         voltages = voltages.split(b",")
         voltages = [float(x) for x in voltages]  # Converte para Float
 
+        self.equipment_logger.debug("tipo=barra bus=%s voltages=%s", bus_name, voltages)
+
         return voltages
 
     def get_elem_voltages(self, element_name, terminal):
@@ -169,6 +227,8 @@ class DSSim:
         # Sempre temos que retornar 4 valores de tensão de fase para o Módulo Central.
         while len(voltages) < 9:
             voltages.append(float(0.0))  # Enviar zero nas outras fases
+
+        self.equipment_logger.debug("element=%s terminal=%s voltages=%s", element_name, terminal, voltages)
 
         return voltages
 
@@ -196,6 +256,8 @@ class DSSim:
         while len(currents) < 9:
             currents.append(float(0.0))  # Enviar zero nas outras fases
 
+        self.equipment_logger.debug("tipo=%s element=%s currents=%s", tipoequip, element_name, currents)
+
         return currents
 
     def get_switch_state(self, switch_name):
@@ -221,11 +283,8 @@ class DSSim:
                 i = i.split(".", 1)[1]
             lista_2.append(i)
 
-
-
         # lista = [i.split(".", 1) for i in lista]
-        print(lista)
-        print(lista_2)
+        self.equipment_logger.debug("switch=%s parsed=%s", switch_name, lista_2)
         # print(str(lista))
 
         if switch_name in lista_2:
@@ -268,16 +327,16 @@ class DSSim:
             n_phases = len(powers) / 2
             terminal = 1  # força leitura da potência do único terminal que tem
 
-            print('len(powers): ', len(powers))
-            print("n_phases = len(powers) / 2")
-            print(f'n_phases = {n_phases}')
+            # print('len(powers): ', len(powers))
+            # print("n_phases = len(powers) / 2")
+            # print(f'n_phases = {n_phases}')
         else:
             # n_phases = len(powers) / 4  #?????
             n_phases = len(powers) / 2
 
-            print('len(powers): ', len(powers))
-            print("n_phases = len(powers) / 2")
-            print(f'n_phases = {n_phases}')
+            # print('len(powers): ', len(powers))
+            # print("n_phases = len(powers) / 2")
+            # print(f'n_phases = {n_phases}')
 
         p_total_1 = 0
         q_total_1 = 0
@@ -293,12 +352,15 @@ class DSSim:
             #     q_total_2 = powers[int(2 * i + 1 + n_phases * 2)] + q_total_2
 
         if terminal == 1:
+            self.equipment_logger.debug("tipo=%s element=%s terminal=%s powers=(%s, %s)", classe_elemento, element_name, terminal, p_total_1, q_total_1)
             return p_total_1, q_total_1
 
         elif terminal == 2:
+            self.equipment_logger.debug("tipo=%s element=%s terminal=%s powers=(%s, %s)", classe_elemento, element_name, terminal, p_total_2, q_total_2)
             return p_total_2, q_total_2
 
         elif terminal is None:
+            self.equipment_logger.debug("tipo=%s element=%s powers=(%s, %s, %s, %s)", classe_elemento, element_name, p_total_1, q_total_1, p_total_2, q_total_2)
             return p_total_1, q_total_1, p_total_2, q_total_2
 
     def get_phase_powers(self, element_name, terminal, phase):
@@ -327,6 +389,32 @@ class DSSim:
             powers_tupla = powers[6*(terminal-1) + 2*(phase-1)], powers[6*(terminal-1) + 2*(phase-1) + 1]   # P, Q
             return powers_tupla
 
+    def get_transformer_buses(self, transformer_name):
+        """Método que recebe o nome de um transformador e retorna os nomes das barras conectadas a ele"""
+
+        buses = self.send_dss_command("? " + transformer_name + ".buses")
+        buses = buses[1:-3]  # deleta [ ....  , ]
+        buses = buses.split(b",")
+        buses = [x.decode('utf-8') for x in buses]
+
+        return buses
+
+    def get_transformer_bus(self, transformer_name):
+        """Método que recebe o nome de um transformador e retorna o nome da barra conectada a ele"""
+        try:
+            bus = self.send_dss_command("? " + transformer_name + ".bus")
+            if isinstance(bus, bytes):
+                try:
+                    bus = bus.decode('utf-8', errors='replace')
+                except Exception:
+                    bus = repr(bus)
+            else:
+                bus = str(bus)
+
+            return bus
+        except Exception as exc:
+            return None
+
     def get_transformer_tap(self, transformer_name, winding):
         """Método que recebe o nome de um transformador e um enrolamento e
         retorna o tap atual desse enrolamento em pu e em passos
@@ -351,8 +439,9 @@ class DSSim:
             step_pu = (maxtap - mintap) / num_taps
 
             step = (taps_array[winding-1] - 1.0) / step_pu + (num_taps / 2 + 1)
+            step_display = (taps_array[winding-1] - 1.0) / step_pu + (num_taps / 2 - 16)
 
-        return taps_array[winding-1], int(round(step))   # int(-1.0) estava retornando 0 (int) ao invés de -1 (int)
+        return taps_array[winding-1], int(round(step)), int(round(step_display))   # int(-1.0) estava retornando 0 (int) ao invés de -1 (int)
 
     def get_capacitor_state(self, capacitor_name):
         """Método que recebe o nome de um capacitor e retorna o seu estado"""
@@ -568,7 +657,7 @@ class DSSim:
         mintap = float(self.send_dss_command("? " + transformer_name + ".mintap"))
         num_taps = float(self.send_dss_command("? " + transformer_name + ".numtaps"))
         tap_atual = self.send_dss_command("? " + transformer_name + ".tap")
-
+        self.logger.debug('tap atual: %s', tap_atual)
 
         step_pu = (maxtap - mintap) / num_taps
 
@@ -621,6 +710,7 @@ class DSSim:
         data_r = data[8:tamanho]
 
         return data_r
+
 
     def refresh_gui(self, tipo):
         """Método que atualiza a GUI do DSSim"""
