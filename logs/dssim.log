@@ -1,6 +1,1 @@
-2026-06-02 22:20:31,444 - DEBUG:__main__:This is a debug message.
-2026-06-02 22:20:31,446 - INFO:__main__:Application starting up with configuration from YAML.
-2026-06-02 22:20:31,447 - WARNING:__main__:This is a warning.
-2026-06-02 22:44:53,565 - DEBUG:__main__:This is a debug message.
-2026-06-02 22:44:53,566 - INFO:__main__:Application starting up with configuration from YAML.
-2026-06-02 22:44:53,566 - WARNING:__main__:This is a warning.
+2026-07-22 18:00:53,900 - INFO     - root         - server:1734 - Servidor rodando e aguardando conexões na porta 1024...

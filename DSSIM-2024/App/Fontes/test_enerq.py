@@ -9,7 +9,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Liga o socket ao endereco e porta especificados
 s.bind((HOST, PORT))
-print 'Servidor escutando em', HOST, 'na porta', PORT
+print('Servidor escutando em', HOST, 'na porta', PORT)
 
 # Coloca o socket em modo de escuta
 s.listen(2)
@@ -31,11 +31,11 @@ while True:
 
 # Fecha o socket da conexao atual
 conn.close()
-print 'conexao finalizada'
+print('conexao finalizada')
 
 s.listen(10)  # Verificar se o nmero de conexes possveis pode afetar o funcionamento do nosso software
 conn, add = s.accept()
-print "Conectado a " + add[0] + ":" + str(add[1])
+print('Conectado a ' + add[0] + ':' + str(add[1]))
 
 data = None
 while True:
@@ -45,7 +45,7 @@ while True:
     # if not data:
         #  break
     if data is not None:
-        print 'Mensagem recebida:' + data.decode()
+        print('Mensagem recebida:' + data.decode())
         # decodifica_mensagem(data)
         # resposta = process_data(data)
     # if resposta is not None:
@@ -53,4 +53,4 @@ while True:
 
 conn.close()  # Verificar como arrumar essa questo do trmino da comunicao.
 s.close()
-print 'conexao finalizada'
+print('conexao finalizada')

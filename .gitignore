@@ -44,3 +44,4 @@ UUIDS*.csv
 logs/**.log**
 out/
 logsEnerq/
+DSSIM-2024/in/terminalOut260920.txt
