@@ -545,15 +545,17 @@ class DSSim:
         self.send_dss_command(nome_capacitor + ".kvar=" + str(kvar))
 
     def set_capacitor_state(self, nome_capacitor, state):
-
-        states = self.send_dss_command("? Capacitor.Cap.states")
+        print("set_capacitor_state: ", nome_capacitor, state)
+        states = self.send_dss_command(f"? {nome_capacitor}.states")
         print("antes: ", states)
 
-        self.send_dss_command(nome_capacitor + ".states=" + str(state))
+        resposta = self.send_dss_command(nome_capacitor + ".states=" + str(state))
         # self.send_dss_command("CapControl.cap.states=" + str(state))
 
-        states = self.send_dss_command("? Capacitor.Cap.states")
+        states = self.send_dss_command(f"? {nome_capacitor}.states")
         print(f"depois: {states}")
+
+        return resposta
 
     def set_load_powers(self, nome_carga, p, q):
 
