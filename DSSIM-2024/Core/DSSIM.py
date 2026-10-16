@@ -546,13 +546,14 @@ class DSSim:
 
     def set_capacitor_state(self, nome_capacitor, state):
 
-        states = self.send_dss_command("? Capacitor.Cap.states")
+        print("--- Estado do capacitor ---")
+        states = self.send_dss_command(f"? Capacitor.{nome_capacitor}.states")
         print("antes: ", states)
 
-        self.send_dss_command(nome_capacitor + ".states=" + str(state))
+        self.send_dss_command(f"Capacitor.{nome_capacitor}.states={state}")
         # self.send_dss_command("CapControl.cap.states=" + str(state))
 
-        states = self.send_dss_command("? Capacitor.Cap.states")
+        states = self.send_dss_command(f"? Capacitor.{nome_capacitor}.states")
         print(f"depois: {states}")
 
     def set_load_powers(self, nome_carga, p, q):
