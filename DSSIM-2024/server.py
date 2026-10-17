@@ -1261,7 +1261,7 @@ def process_data(msg):
 
                 nome_opendss = dssim_obj.get_nome_opendss(id_equipamento)
                 resposta = dssim_obj.set_capacitor_state(nome_opendss, int(novo_estado))
-                logger.info("func=11 capacitor id=%s nome=%s estado=%s resposta=%s", id_equipamento, nome_opendss, novo_estado, resposta)
+                logger.info("func=%s capacitor id=%s nome=%s estado=%s resposta=%s", funcao, id_equipamento, nome_opendss, novo_estado, resposta)
 
                 if resposta == 'OK':  # 0 é o valor retornado pelo DSSim quando essa função é executada.
                     msg_retornada = func100acknowledgment(int(funcao), 1)
